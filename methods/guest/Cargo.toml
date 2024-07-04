@@ -1,0 +1,8 @@
+[package]
+name = "preview"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+risc0-zkvm = { version = "1.0.1", default-features = false, features = ['std'] }
+#image-watermark = { git = "https://github.com/chakrit/image-watermark" }
