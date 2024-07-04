@@ -1,10 +1,12 @@
 [package]
-name = "host"
+name = "thumbnail"
 version = "0.1.0"
 edition = "2021"
 
+default-run = "thumbnail"
+
 [dependencies]
-methods = { path = "../methods" }
+thumbnail-methods = { path = "methods" }
 risc0-zkvm = { version = "1.0.1" }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 serde = "1.0"

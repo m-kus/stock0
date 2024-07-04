@@ -5,7 +5,7 @@ use risc0_zkvm::guest::env;
 use risc0_zkvm::sha::rust_crypto::{Digest as _, Sha256};
 use std::io::Read;
 
-const THUMB_SIZE_PX: u32 = 75;
+const THUMB_SIZE_PX: u32 = 50;
 
 fn main() {
     // Read raw image data
