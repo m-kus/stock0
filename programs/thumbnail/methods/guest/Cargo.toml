@@ -3,8 +3,6 @@ name = "thumbnail-gen"
 version = "0.1.0"
 edition = "2021"
 
-[workspace]
-
 [dependencies]
 getrandom = { version = "=0.2.15", features = ["custom"] }
 risc0-zkvm = { version = "1.0.1", default-features = false, features = ['std'] }
