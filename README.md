@@ -89,11 +89,12 @@ Public samples
 https://c2pa.org/public-testfiles/image/
 https://opensource.contentauthenticity.org/docs/manifest/manifest-examples
 
+How to calculate a hash?
+https://github.com/contentauth/c2pa-rs/blob/main/sdk/src/assertions/data_hash.rs
+
 ## Slides
 
 https://docs.google.com/presentation/d/1qq1QXSBcThOjaQ2OcEyS8cwNyAHs3SnC76YrBMAYENk/edit?usp=sharing
 
-How to calculate a hash?
-https://github.com/contentauth/c2pa-rs/blob/main/sdk/src/assertions/data_hash.rs
 
 
