@@ -82,6 +82,7 @@ https://github.com/yetanotherco/aligned_layer/blob/main/examples/zkquiz/contract
 ### Interact with blobstream onchain
 
 [Original code](https://github.com/succinctlabs/blobstreamx) deployed to https://holesky.etherscan.io/address/0x7D39B4a5Af8194b1aDA58d56Cc4aA5a05f949f3c#code
+
 [Fork with mocked verify function](https://github.com/dmirgaleev/blobstreamx) deployed to https://holesky.etherscan.io/address/0x8354693274eAe91Bc11B4b8981a8aB26d85F4A66
 
 
