@@ -12,6 +12,8 @@ https://dev.risczero.com/api/zkvm/install
 
 https://github.com/contentauth/c2patool?tab=readme-ov-file#building-from-source
 
+https://contentcredentials.org/trust/allowed.sha256.txt
+
 ### Aligned batcher CLI
 
 https://docs.alignedlayer.com/introduction/1_getting_started
