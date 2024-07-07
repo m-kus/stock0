@@ -1,5 +1,5 @@
 import * as ethers from 'ethers';
-import Web3Model from 'web3modal';
+import Web3Modal from 'web3modal';
 import Market from '../artifacts/contracts/Market.sol/Market.json';
 import { marketContractAddress } from '../config';
 import { useEffect, useState } from 'react';
@@ -43,19 +43,33 @@ export default function Home() {
 	};
 
 	const purchaseItem = async (item) => {
-		const web3Model = new Web3Model();
-		const connection = await web3Model.connect();
+		const modal = new Web3Modal();
+		const connection = await modal.connect();
 		const provider = new ethers.providers.Web3Provider(connection);
 
-		const signer = provider.getSigner();
-		const market = new ethers.Contract(marketContractAddress, Market.abi, signer);
+		let accounts = await provider.send("eth_requestAccounts", []);
+		let account = accounts[0];
+		console.log("Using account ", account);
+
+		const signer = provider.getSigner(account);
+		console.log("Signer ", signer);
+
+		const marketContract = new ethers.Contract(
+			marketContractAddress,
+			Market.abi,
+			signer
+		);
 
 		const price = ethers.utils.parseUnits(item.price.toString(), 'ether');
-		const transaction = await market.purchaseItem(
+		const marketTransaction = await marketContract.purchaseMarketItem(
 			item.itemId,
-			{ value: price }
+			{ value: price, maxFeePerGas: 875000000 }
 		);
-		await transaction.wait();
+		console.log("create new item tx: ", marketTransaction);
+
+		const marketTx = await marketTransaction.wait();
+		console.log("create new item res: ", marketTx);
+
 		loadItems();
 	};
 
