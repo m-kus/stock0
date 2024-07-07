@@ -37,12 +37,15 @@ fn main() {
     let prover = default_prover();
     let prove_info = prover.prove(env, ENVELOPE_GEN_ELF).unwrap();
 
+    // Check that everything is OK
+    prove_info.receipt.verify(ENVELOPE_GEN_ID).expect("failed to verify");
+
     let mode = if std::env::var_os("RISC0_DEV_MODE").is_some_and(|x| x == "1") {
         "dev"
     } else {
         "prod"
     };
-    let output_dir: PathBuf = [env!("CARGO_MANIFEST_DIR"), "..", "target", "aligned", mode]
+    let output_dir: PathBuf = [env!("CARGO_MANIFEST_DIR"), "..", "target", mode, "envelope"]
         .iter()
         .collect();
     create_dir_all(output_dir.as_path()).unwrap();

@@ -2,3 +2,8 @@
 Cargo.lock
 methods/guest/Cargo.lock
 target/
+cache/
+artifacts/
+node_modules/
+.env
+.next/
