@@ -95,6 +95,8 @@ https://github.com/yetanotherco/aligned_layer/blob/main/examples/zkquiz/contract
   SUCCINCT_GATEWAY_17000=0xf937d2bc14cad82b661f00e12551a8d7bb5bc4d4
 ```
 
+Example of verify attestation: https://github.com/dmirgaleev/blobstreamx-example
+
 ### Submit blob to Celestia
 
 ## C2PA
