@@ -24,6 +24,9 @@ fn main() {
     let prover = default_prover();
     let prove_info = prover.prove(env, THUMBNAIL_GEN_ELF).unwrap();
 
+    // Check that everythin is OK
+    prove_info.receipt.verify(THUMBNAIL_GEN_ID).expect("failed to verify");
+
     let mode = if std::env::var_os("RISC0_DEV_MODE").is_some_and(|x| x == "1") {
         "dev"
     } else {
@@ -38,10 +41,18 @@ fn main() {
     let mut receipt_file = File::create(output_dir.join("receipt")).unwrap();
     receipt_file.write_all(&receipt_bytes).unwrap();
 
-    let image_id_bytes = THUMBNAIL_GEN_ID.map(|limb| limb.to_be_bytes()).concat();
+    let image_id_bytes = convert_image_id(&THUMBNAIL_GEN_ID);
     let mut image_id_file = File::create(output_dir.join("image_id")).unwrap();
     image_id_file.write_all(&image_id_bytes).unwrap();
 
     let mut thumb_file = File::create(output_dir.join("thumb.png")).unwrap();
     thumb_file.write_all(&thumbnail_bytes).unwrap();
+}
+
+pub fn convert_image_id(data: &[u32; 8]) -> [u8; 32] {
+    let mut res = [0; 32];
+    for i in 0..8 {
+        res[4 * i..4 * (i + 1)].copy_from_slice(&data[i].to_le_bytes());
+    }
+    res
 }

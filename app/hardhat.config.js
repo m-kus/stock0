@@ -10,9 +10,9 @@ module.exports = {
 		hardhat: {
 			chainId: 17000,
 		},
-		holesky: {
-			url: 'https://eth-holesky.g.alchemy.com/v2/LvICyiq5PpiU6pmBNWJCHWjzjH4ObPob',
-			accounts: [process.env.HOLESKY_PRIVATE_KEY],
-		}
+		// holesky: {
+		// 	url: 'https://eth-holesky.g.alchemy.com/v2/LvICyiq5PpiU6pmBNWJCHWjzjH4ObPob',
+		// 	accounts: [process.env.HOLESKY_PRIVATE_KEY],
+		// }
 	},
 };

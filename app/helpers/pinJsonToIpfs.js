@@ -4,6 +4,9 @@ export async function pinJSONToIPFS(data) {
 	try {
 		const body = {
 			pinataContent: data,
+			pinataMetadata: JSON.stringify({
+				name: 'Manifest'
+			})
 		};
 
 		const res = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {

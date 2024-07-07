@@ -1,77 +1,73 @@
 import { ethers } from 'ethers';
 import React, { useEffect, useState } from 'react';
 import Web3Modal from 'web3modal';
-import { nftAddress, nftMarketAddress } from '../config';
-import NFT from '../artifacts/contracts/NFT.sol/NFT.json';
-import NFTMarket from '../artifacts/contracts/NFTMarket.sol/NFTMarket.json';
-import axios from 'axios';
+import { marketContractAddress } from '../config';
+import Market from '../artifacts/contracts/Market.sol/Market.json';
+import { getUrlFromIpfsMultihash, getUrlFromIpfsCID } from '../helpers/getUrlFromIpfsHash';
 
 export default function MyAssets() {
-	const [nfts, setNfts] = useState([]);
+	const [items, setItems] = useState([]);
 	const [loadingState, setLoadingState] = useState('not-loaded');
 
 	useEffect(() => {
-		loadNfts();
+		loadItems();
 	}, []);
 
-	const loadNfts = async () => {
+	const loadItems = async () => {
 		const web3Modal = new Web3Modal();
 		const connection = await web3Modal.connect();
 		const provider = new ethers.providers.Web3Provider(connection);
 		const signer = provider.getSigner();
 
 		const marketContract = new ethers.Contract(
-			nftMarketAddress,
-			NFTMarket.abi,
+			marketContractAddress,
+			Market.abi,
 			signer
 		);
-		const nftContract = new ethers.Contract(nftAddress, NFT.abi, provider);
-		const result = await marketContract.fetchMyNFTs();
+		const result = await marketContract.fetchMyItems();
 
-		const myNfts = await Promise.all(
-			result.map(async (item) => {
-				const tokenURI = await nftContract.tokenURI(item.tokenId);
-				const { data } = await axios.get(tokenURI);
-
+		const myItems = await Promise.all(
+			result.map(async (i) => {
 				return {
-					image: data.image,
-					price: ethers.utils.formatUnits(item.price.toString(), 'ether'),
-					name: data.name,
-					description: data.description,
-					tokenId: item.tokenId.toNumber(),
-					itemId: item.itemId,
+					itemId: i.itemId,
+					price: ethers.utils.formatUnits(i.price.toString(), 'ether'),
+					buyer: i.buyer,
+					seller: i.seller,
+					thumbnailUri: getUrlFromIpfsMultihash(i.thumbnailHash),
+					manifestUri: getUrlFromIpfsCID(i.manifestCID),
+					status: i.status
 				};
 			})
 		);
 
-		setNfts(myNfts);
-		setLoadingState('loaded');
+		setItems(myItems);
+		setLoadingState('loaded')
 	};
 
-	if (loadingState === 'loaded' && !nfts.length)
-		return <h1 className='px-28 py-10 text-3xl'>No assets owned</h1>;
+	if (loadingState === 'loaded' && !items.length)
+		return <h1 className='px-28 py-10 text-3xl'>No items related to your account</h1>;
 
 	return (
 		<div className='flex justify-center'>
 			<div className='max-w-[1600px]'>
 				<div className='p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4'>
-					{nfts.map((nft) => (
+					{items.map((item) => (
 						<div
-							key={nft.itemId}
+							key={item.itemId}
 							className='rounded-lg border shadow overflow-hidden flex flex-col'
 						>
-							<img src={nft.image} className='w-full object-contain' />
+							<img src={item.thumbnailUri} className='w-full object-contain' />
 
-							<div className='p-4 mt-auto'>
-								<p className='h-8 text-2xl font-semibold'>{nft.name}</p>
+							{/* <div className='p-4 mt-auto'>
+								<p className='h-8 text-2xl font-semibold'>{item.name}</p>
 								<div className='h-[70px] overflow-hidden'>
-									<p className='text-gray-400'>{nft.description}</p>
+									<p className='text-gray-400'>{item.description}</p>
 								</div>
-							</div>
+							</div> */}
 
 							<div className='p-4 bg-black'>
 								<p className='text-2xl mb-4 font-bold text-white'>
-									{nft.price} Matic
+									{item.price} ETH
 								</p>
 							</div>
 						</div>

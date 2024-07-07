@@ -7,6 +7,8 @@ edition = "2021"
 risc0-zkvm = { version = "1.0.1", default-features = false, features = ['std'] }
 k256 = { version = "=0.13.1", features = ["arithmetic", "expose-field", "std", "ecdsa"], default_features = false }
 chacha20 = "0.8.1"
+#nmt-rs = { version = "0.2.0", default-features = false }
+celestia-types = { git = "https://github.com/eigerco/lumina", default-features = false }
 
 [patch.crates-io]
 # Placing these patch statement in the workspace Cargo.toml will add RISC Zero SHA-256 and bigint

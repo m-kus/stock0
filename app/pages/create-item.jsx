@@ -2,77 +2,87 @@ import * as ethers from 'ethers';
 import { useRouter } from 'next/dist/client/router';
 import React, { useState } from 'react';
 import Web3Modal from 'web3modal';
-import NFT from '../artifacts/contracts/NFT.sol/NFT.json';
-import NFTMarket from '../artifacts/contracts/NFTMarket.sol/NFTMarket.json';
-import { ipfsGateway, nftAddress, nftMarketAddress } from '../config';
+import Market from '../artifacts/contracts/Market.sol/Market.json';
+import { marketContractAddress } from '../config';
 import { pinFileToIPFS } from '../helpers/pinFileToIpfs';
 import { pinJSONToIPFS } from '../helpers/pinJsonToIpfs';
-import { getUrlFromIpfsHash } from '../helpers/getUrlFromIpfsHash';
+import { getUrlFromIpfsCID } from '../helpers/getUrlFromIpfsHash';
+import { CID } from 'multiformats/cid'
 
 export default function CreateItem() {
 	const [file, setFile] = useState(null);
 	const [formInput, setFormInput] = useState({
-		name: '',
 		price: '',
-		description: '',
+		manifest: '',
 	});
 	const router = useRouter();
 
 	const onChange = async (e) => {
 		try {
-			const file = e.target.files[0];
-			const addedFile = await pinFileToIPFS(file);
-			console.log('addedFile', addedFile);
-			console.log('first', `${ipfsGateway}${addedFile.IpfsHash}`);
-			setFile(`${ipfsGateway}${addedFile.IpfsHash}`);
+			const thumbnail = e.target.files[0];
+			const thumbnailFile = await pinFileToIPFS(thumbnail);
+			console.log('thumbnail file on IPFS: ', thumbnailFile);
+			// TODO: extract SHA256 hash from multihash
+			setFile(thumbnailFile.IpfsHash);
 		} catch (error) {
 			console.log('error', error);
 		}
 	};
 
 	const createItem = async () => {
-		const { name, price, description } = formInput;
-		console.log(
-			'!name || !price || !description || !file',
-			!name || !price || !description || !file
-		);
-		if (!name || !price || !description || !file) return;
+		const { price, manifest } = formInput;
+		console.log("New item: ", price, manifest, file);
+		if (!price || !manifest || !file) return;
 
 		try {
-			const added = await pinJSONToIPFS({ name, description, image: file });
-			const url = getUrlFromIpfsHash(added.IpfsHash);
-			await createSale(url);
+			const manifestFile = await pinJSONToIPFS(JSON.stringify(manifest));
+			console.log("Manifest file: ", manifestFile);
+
+			// TODO: extract image hash from manifest
+
+			console.log("Manifest CID ", CID.parse(file));
+
+			const manifestHashBytes = CID.parse(manifestFile.IpfsHash).bytes;
+			const thumbnailHashBytes = CID.parse(file).multihash.digest.buffer;
+			const imageHashBytes = CID.parse(file).bytes;
+			const priceInWei = ethers.utils.formatEther(weiValue)
+
+			await createNewItem(manifestHashBytes, thumbnailHashBytes, imageHashBytes, priceInWei);
 		} catch (error) {
 			console.log('error', error);
 		}
 	};
 
-	const createSale = async (url) => {
+	const createNewItem = async (manifestIpfsHash, thumbnailHash, imageHash, priceInWei) => {
 		const modal = new Web3Modal();
 		const connection = await modal.connect();
 		const provider = new ethers.providers.Web3Provider(connection);
-		const signer = provider.getSigner();
 
-		const nftContract = new ethers.Contract(nftAddress, NFT.abi, signer);
-		const transaction = await nftContract.createToken(url);
-		const tx = await transaction.wait();
+		let accounts = await provider.send("eth_requestAccounts", []);
+		let account = accounts[0];
+		console.log("Using account ", account);
 
-		const event = tx.events[0];
-		const tokenId = event.args[2];
+		const signer = provider.getSigner(account);
+		console.log("Signer ", signer);
 
-		const nftMarketContract = new ethers.Contract(
-			nftMarketAddress,
-			NFTMarket.abi,
+		const marketContract = new ethers.Contract(
+			marketContractAddress,
+			Market.abi,
 			signer
 		);
-		const listingPrice = (await nftMarketContract.getListingPrice()).toString();
-		const marketTransaction = await nftMarketContract.createMarketItem(
-			nftAddress,
-			tokenId,
-			formInput.price,
-			{ value: listingPrice }
+
+		const marketTransaction = await marketContract.createMarketItem(
+			imageHash,
+			thumbnailHash,
+			manifestIpfsHash,
+			priceInWei,
+			{ maxFeePerGas: 875000000 }
 		);
+		console.log("create new item tx: ", marketTransaction);
+
 		const marketTx = await marketTransaction.wait();
+		console.log("create new item res: ", marketTx);
+
 		router.push('/');
 	};
 
@@ -81,40 +91,35 @@ export default function CreateItem() {
 			<div className='flex-col w-1/2 flex pb-12'>
 				<input
 					className='mt-8 border rounded p-4'
-					placeholder='Asset Name'
-					onChange={(e) =>
-						setFormInput((prev) => ({ ...prev, name: e.target.value }))
-					}
-				/>
-				<textarea
-					className='mt-8 border rounded p-4'
-					placeholder='Asset Description'
-					onChange={(e) =>
-						setFormInput((prev) => ({ ...prev, description: e.target.value }))
-					}
-				/>
-				<input
-					className='mt-8 border rounded p-4'
-					placeholder='Asset Price in Matic'
+					placeholder='Price in ETH'
 					onChange={(e) =>
 						setFormInput((prev) => ({ ...prev, price: e.target.value }))
 					}
 				/>
-				<input type='file' name='Asset' className='my-4' onChange={onChange} />
+				<textarea
+					className='mt-8 border rounded p-4 code'
+					placeholder='C2PA manifest in JSON [must contain signed datahash claim]'
+					onChange={(e) =>
+						setFormInput((prev) => ({ ...prev, manifest: e.target.value }))
+					}
+				/>
 
-				{file && <img src={file} className='rounded mt-4 w-[350px]' />}
+				<div className="border mt-8 p-4 rounded flex flex-col">
+					<label style={{color: '#999'}}>Thumbnail file in PNG format [produced by Risc0 program]</label>
+					<input type='file' name='Thumbnail' className='my-4' onChange={onChange} />
+					{file && <img src={getUrlFromIpfsCID(file)} className='rounded py-2' style={{ width: "75px"}} />}
+				</div>
 
 				<button
-					className='rounded p-4 shadow-lg mt-4 font-bold bg-pink-500 text-white'
+					className='rounded p-4 shadow-lg mt-8 font-bold bg-pink-500 text-white'
 					onClick={createItem}
 					disabled={
-						!formInput.name ||
 						!formInput.price ||
-						!formInput.description ||
+						!formInput.manifest ||
 						!file
 					}
 				>
-					Create digital asset
+					Create image offer
 				</button>
 			</div>
 		</div>

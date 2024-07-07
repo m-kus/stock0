@@ -5,8 +5,10 @@ export async function pinFileToIPFS(file) {
 		const formData = new FormData();
 		formData.append('file', file);
 
+		console.log("JWT: ", pinataJWT);
+
 		const pinataMetadata = JSON.stringify({
-			name: 'File name',
+			name: 'Thumbnail',
 		});
 		formData.append('pinataMetadata', pinataMetadata);
 

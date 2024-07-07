@@ -25,9 +25,9 @@ contract Market is ReentrancyGuard {
 
     struct MarketItem {
         uint256 itemId;
-        uint256 originalDataHash;
-        uint256 thumbnailMultihash;
-        bytes c2paManifest;
+        bytes imageHash;
+        bytes thumbnailHash;
+        bytes manifestCID;
         address payable seller;
         address payable buyer;
         uint256 price;
@@ -38,31 +38,31 @@ contract Market is ReentrancyGuard {
 
     event MarketItemCreated(
         uint256 indexed itemId,
-        uint256 originalDataHash,
-        uint256 thumbnailMultihash,
-        bytes c2paManifest,
+        bytes imageHash,
+        bytes thumbnailHash,
+        bytes manifestCID,
         address seller,
         address buyer,
         uint256 price
     );
 
     function createMarketItem(
-        uint256 originalDataHash,
-        uint256 thumbnailMultihash,
-        bytes memory c2paManifest,
+        bytes memory imageHash,
+        bytes memory thumbnailHash,
+        bytes memory manifestCID,
         uint256 price
     ) public payable nonReentrant {
         require(price > 0, "Price must greater than 0");
-        // TODO: verify originalDataHash & thumbnailMultihash via Aligned
+        // TODO: verify imageHash & thumbnailHash via Aligned
         // TODO: ensure thumbnail program ID is the same
 
         _itemIds.increment();
         uint256 itemId = _itemIds.current();
         idToMarketItem[itemId] = MarketItem(
             itemId,
-            originalDataHash,
-            thumbnailMultihash,
-            c2paManifest,
+            imageHash,
+            thumbnailHash,
+            manifestCID,
             payable(msg.sender),
             payable(address(0)),
             price,
@@ -71,9 +71,9 @@ contract Market is ReentrancyGuard {
 
         emit MarketItemCreated(
             itemId,
-            originalDataHash,
-            thumbnailMultihash,
-            c2paManifest,
+            imageHash,
+            thumbnailHash,
+            manifestCID,
             payable(msg.sender),
             payable(address(0)),
             price
@@ -103,11 +103,11 @@ contract Market is ReentrancyGuard {
 
     function fetchAvailableItems() public view returns (MarketItem[] memory) {
         uint256 totalItemCount = _itemIds.current();
-        uint256 itemCount;
-        uint256 itemIdx;
+        uint256 itemCount = 0;
+        uint256 itemIdx = 0;
 
         for (uint256 i = 0; i < totalItemCount; i++) {
-            if (idToMarketItem[i + 1].status == ItemStatus.Available) itemCount += 1;
+            if (ItemStatus.Available == idToMarketItem[i + 1].status) itemCount += 1;
         }
 
         MarketItem[] memory items = new MarketItem[](itemCount);
@@ -126,8 +126,8 @@ contract Market is ReentrancyGuard {
 
     function fetchMyItems() public view returns (MarketItem[] memory) {
         uint256 totalItemCount = _itemIds.current();
-        uint256 itemCount;
-        uint256 itemIdx;
+        uint256 itemCount = 0;
+        uint256 itemIdx = 0;
 
         for (uint256 i; i < totalItemCount; i++) {
             if (msg.sender == idToMarketItem[i + 1].seller || msg.sender == idToMarketItem[i + 1].buyer) itemCount += 1;

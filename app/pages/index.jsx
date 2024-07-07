@@ -1,9 +1,9 @@
-import axios from 'axios';
 import * as ethers from 'ethers';
 import Web3Model from 'web3modal';
 import Market from '../artifacts/contracts/Market.sol/Market.json';
 import { marketContractAddress } from '../config';
 import { useEffect, useState } from 'react';
+import { getUrlFromIpfsMultihash, getUrlFromIpfsCID } from '../helpers/getUrlFromIpfsHash';
 
 export default function Home() {
 	const [items, setItems] = useState([]);
@@ -25,7 +25,7 @@ export default function Home() {
 
 		const data = await marketContract.fetchAvailableItems();
 
-		// TODO: validate thumbnail multihash
+		// TODO: convert thumbnail hash to multihash
 
 		const availableItems = await Promise.all(
 			data.map(async (i) => {
@@ -33,8 +33,8 @@ export default function Home() {
 					itemId: i.itemId,
 					price: ethers.utils.formatUnits(i.price.toString(), 'ether'),
 					seller: i.seller,
-					thumbnailUri: `https://ipfs.io/ipfs/${i.thumbnailMultihash}`,
-					manifest: JSON.parse(i.c2paManifest || {}),
+					thumbnailUri: getUrlFromIpfsMultihash(i.thumbnailHash),
+					manifestUri: getUrlFromIpfsCID(i.manifestCID),
 				}
 			})
 		);
@@ -82,7 +82,7 @@ export default function Home() {
 
 							<div className='p-4 bg-black'>
 								<p className='text-2xl mb-4 font-bold text-white'>
-									{item.price} Wei
+									{item.price} ETH
 								</p>
 								<button
 									className='w-full bg-pink-500 text-white font-bold py-2 px-12 rounded'

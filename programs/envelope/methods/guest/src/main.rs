@@ -1,3 +1,5 @@
+use celestia_types::nmt::Namespace;
+use celestia_types::Commitment;
 use chacha20::cipher::{NewCipher, StreamCipher};
 use chacha20::ChaCha20;
 use k256::elliptic_curve::{PrimeField, PublicKey, group::GroupEncoding};
@@ -8,6 +10,7 @@ use std::io::Read;
 use std::ops::Mul;
 
 const CHACHA_STATIC_NONCE: &[u8; 12] = b"bakingbaddev";
+const CELESTIA_NAMESPACE: &[u8; 10] = b"bakingbad0";
 
 fn main() {
     // Read receiver's public key (SEC1)
@@ -29,6 +32,7 @@ fn main() {
     let c1 = AffinePoint::GENERATOR.mul(y).to_affine();
     let c2 = h.mul(y).to_affine();
 
+    // This is "encrypted" encryption key
     let blinded_key = [c1.to_bytes().to_vec(), c2.to_bytes().to_vec()].concat();
 
     // Read raw image data
@@ -47,10 +51,13 @@ fn main() {
 
     // Construct blob
     let blob = [blinded_key, encrypted_image].concat();
-    let blob_hash = sha256(&blob);
+
+    // Calculate blob commitment
+    let blob_commitment = Commitment::from_blob(Namespace::const_v0(*CELESTIA_NAMESPACE), 0, &blob)
+        .expect("Failed to create commitment");
 
     // Write original image & blob hashes as well as the receiver's public key to the journal
-    env::commit_slice(&[image_hash, blob_hash, public_key_h.to_vec()].concat());
+    env::commit_slice(&[image_hash, blob_commitment.0.to_vec(), public_key_h.to_vec()].concat());
 
     // Write blob to the stdout
     env::write_slice(&blob);
