@@ -12,8 +12,6 @@ https://dev.risczero.com/api/zkvm/install
 
 https://github.com/contentauth/c2patool?tab=readme-ov-file#building-from-source
 
-https://contentcredentials.org/trust/allowed.sha256.txt
-
 ### Aligned batcher CLI
 
 https://docs.alignedlayer.com/introduction/1_getting_started
@@ -105,7 +103,10 @@ Example of verify attestation: https://github.com/dmirgaleev/blobstreamx-example
 
 Public samples
 https://c2pa.org/public-testfiles/image/
+
 https://opensource.contentauthenticity.org/docs/manifest/manifest-examples
+
+https://contentcredentials.org/trust/allowed.sha256.txt
 
 How to calculate a hash?
 https://github.com/contentauth/c2pa-rs/blob/main/sdk/src/assertions/data_hash.rs
