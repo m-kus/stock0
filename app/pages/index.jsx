@@ -25,8 +25,6 @@ export default function Home() {
 
 		const data = await marketContract.fetchAvailableItems();
 
-		// TODO: convert thumbnail hash to multihash
-
 		const availableItems = await Promise.all(
 			data.map(async (i) => {
 				return {
@@ -74,7 +72,7 @@ export default function Home() {
 	};
 
 	if (loadingState === 'loaded' && !items.length)
-		return <h1 className='px-28 py-10 text-3xl'>No items available for sale</h1>;
+		return <h1 className='px-28 py-10 text-3xl'>No listed items</h1>;
 
 	return (
 		<div className='flex justify-center'>
@@ -86,13 +84,6 @@ export default function Home() {
 							className='border rounded-lg shadow overflow-hidden flex flex-col'
 						>
 							<img src={item.thumbnailUri} className='w-full object-contain' />
-
-							{/* <div className='p-4 mt-auto'>
-								<p className='h-8 text-2xl font-semibold'>{item.name}</p>
-								<div className='h-[70px] overflow-hidden'>
-									<p className='text-gray-400'>{item.description}</p>
-								</div>
-							</div> */}
 
 							<div className='p-4 bg-black'>
 								<p className='text-2xl mb-4 font-bold text-white'>

@@ -7,15 +7,23 @@ export const getUrlFromIpfsCID = (cid) => {
 }
 
 export const getUrlFromIpfsMultihash = (hash) => {
-  const digest = {
-    code: 18,
-    digest: decodeHexStringToByteArray(hash.slice(6)),
-    size: 32,
-    bytes: decodeHexStringToByteArray(hash.slice(2))
-  }
-  console.log("DIGEST ", digest)
+  const digest = decodeHexStringToByteArray(hash.slice(2));
+  const code = 18;
+  const size = 32;
 
-  return getUrlFromIpfsCID(CID.createV0(digest))
+  var bytes = new Uint8Array(34);
+  bytes.set([code, size]);
+  bytes.set(digest, 2);
+
+  const res = {
+    code,
+    digest,
+    size,
+    bytes
+  };
+  console.log("DIGEST ", res);
+
+  return getUrlFromIpfsCID(CID.createV0(res))
 }
 
 var decodeHexStringToByteArray = function (hexString) {

@@ -4,6 +4,7 @@ import Web3Modal from 'web3modal';
 import { marketContractAddress } from '../config';
 import Market from '../artifacts/contracts/Market.sol/Market.json';
 import { getUrlFromIpfsMultihash, getUrlFromIpfsCID } from '../helpers/getUrlFromIpfsHash';
+import Link from 'next/link';
 
 function statusTitle(item) {
 	if (item.status == 0) {
@@ -77,7 +78,7 @@ export default function MyAssets() {
 		console.log("ITEMS: ", items);
 
 		setItems(myItems);
-		setLoadingState('loaded')
+		setLoadingState('loaded');
 	};
 
 	const deliverItem = async (item) => {
@@ -120,25 +121,24 @@ export default function MyAssets() {
 					{items.map((item) => (
 						<div
 							key={item.itemId}
-							className='rounded-lg border shadow overflow-hidden flex flex-col'
+							className='rounded-lg border shadow overflow-hidden flex flex-col m-4'
 						>
 							<img src={item.thumbnailUri} className='w-full object-contain' />
 
-							<div className='p-4 mt-auto'>
+							<div className='p-4'>
 								<p className='h-8 text-2xl font-semibold'>{ statusTitle(item) }</p>
 								<div className='h-[70px] overflow-hidden'>
 									<p className='text-gray-400'>{ statusDescription(item) }</p>
 								</div>
 							</div>
 
-							{(item.status == 1 && !item.isBuyer) && <button
-								className='p-4 shadow-lg mt-8 font-bold bg-pink-100 text-white'
-								onClick={() => deliverItem(item)}
+							{(item.status == 1 && !item.isBuyer) && <Link href={`/submit-proof?item=${item.itemId}`}><button
+								className='p-4 mt-8 font-bold bg-pink-500 text-white'
 							>
 								Submit publication proof
-							</button>}
+							</button></Link>}
 
-							<div className='p-4 bg-black'>
+							<div className='p-4 bg-black mt-auto'>
 								<p className='text-2xl mb-4 font-bold text-white'>
 									{item.price} ETH
 								</p>

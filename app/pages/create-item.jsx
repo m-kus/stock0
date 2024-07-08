@@ -43,9 +43,10 @@ export default function CreateItem() {
 			console.log("Manifest CID ", CID.parse(file));
 
 			const manifestHashBytes = CID.parse(manifestFile.IpfsHash).bytes;
-			const thumbnailHashBytes = CID.parse(file).multihash.digest.buffer;
+			const thumbnailHashBytes = CID.parse(file).multihash.digest;
 			const imageHashBytes = CID.parse(file).bytes;
-			const priceInWei = ethers.utils.formatEther(weiValue)
+			const priceInWei = parseInt(parseFloat(price) * Math.pow(10,18));
+			console.log("Image ", CID.parse(file).multihash);
 
 			await createNewItem(manifestHashBytes, thumbnailHashBytes, imageHashBytes, priceInWei);
 		} catch (error) {
@@ -89,6 +90,7 @@ export default function CreateItem() {
 	return (
 		<div className='flex justify-center'>
 			<div className='flex-col w-1/2 flex pb-12'>
+				<h1 className='pt-8 text-2xl'>Create new item for sale</h1>
 				<input
 					className='mt-8 border rounded p-4'
 					placeholder='Price in ETH'
@@ -104,11 +106,25 @@ export default function CreateItem() {
 					}
 				/>
 
+				<textarea
+					className='mt-8 border rounded p-4 code'
+					placeholder='Verification data in JSON [provided by Aligned batcher]'
+					// onChange={(e) =>
+					// 	setFormInput((prev) => ({ ...prev, manifest: e.target.value }))
+					// }
+				/>
+				
 				<div className="border mt-8 p-4 rounded flex flex-col">
 					<label style={{color: '#999'}}>Thumbnail file in PNG format [produced by Risc0 program]</label>
 					<input type='file' name='Thumbnail' className='my-4' onChange={onChange} />
 					{file && <img src={getUrlFromIpfsCID(file)} className='rounded py-2' style={{ width: "75px"}} />}
 				</div>
+
+				<label className='mt-4' style={{color: '#999', fontSize: '12px'}}>
+					Stock0 will extract original image size from C2PA manifest and calculate thumbnail hash given the provided file:
+					combined they must match the Risc0 journal (public output), so if the Aligned manager contract accepts
+					the verification data then we will know that this thumbnail was <b>actually derived</b> from the original image.
+				</label>
 
 				<button
 					className='rounded p-4 shadow-lg mt-8 font-bold bg-pink-500 text-white'

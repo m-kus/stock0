@@ -9,12 +9,14 @@ import "hardhat/console.sol";
 contract Market is ReentrancyGuard {
     using Counters for Counters.Counter;
     Counters.Counter private _itemIds;
-    uint256 private _thumbnailProgramId;
-    uint256 private _envelopeProgramId;
+    bytes32 private _thumbnailProgramId;
+    bytes32 private _envelopeProgramId;
+    address private _alignedManagerContract;
 
-    constructor(uint256 thumbnailProgramId, uint256 envelopeProgramId) {
+    constructor(bytes32 thumbnailProgramId, bytes32 envelopeProgramId, address alignedManagerContract) {
         _thumbnailProgramId = thumbnailProgramId;
         _envelopeProgramId = envelopeProgramId;
+        _alignedManagerContract = alignedManagerContract;
     }
 
     enum ItemStatus {
@@ -92,12 +94,55 @@ contract Market is ReentrancyGuard {
         idToMarketItem[itemId].status = ItemStatus.InEscrow;
     }
 
-    function deliverMarketItem(uint256 itemId) public nonReentrant() {
+    function deliverMarketItem(
+        uint256 itemId,
+        bytes memory publicKey,
+        bytes32 proofCommitment,
+        bytes32 pubInputCommitment,
+        bytes32 provingSystemAuxDataCommitment,
+        bytes20 proofGeneratorAddr,
+        bytes32 batchMerkleRoot,
+        bytes memory merkleProof,
+        uint256 verificationDataBatchIndex
+    ) public nonReentrant() {
         require(idToMarketItem[itemId].status == ItemStatus.InEscrow);
+
+        // bytes32 publicKeyHash = keccak256(publicKey);
+        // address addr = address(uint160(uint256(publicKeyHash)));
+        // require(idToMarketItem[itemId].buyer == addr);
+
+        //require(_envelopeProgramId == provingSystemAuxDataCommitment, "Image ID does not match");
+
+        (bool callWasSuccessfull, bytes memory proofIsIncluded) = _alignedManagerContract.staticcall(
+            abi.encodeWithSignature(
+                "verifyBatchInclusion(bytes32,bytes32,bytes32,bytes20,bytes32,bytes,uint256)",
+                proofCommitment,
+                pubInputCommitment,
+                provingSystemAuxDataCommitment,
+                proofGeneratorAddr,
+                batchMerkleRoot,
+                merkleProof,
+                verificationDataBatchIndex
+            )
+        );
+        require(callWasSuccessfull, "alignedManager static call failed");
+
+        bool proofIncluded = abi.decode(proofIsIncluded, (bool));
+        require(proofIncluded, "alignedManager says proof is not included");
+
+        // NOTE
+        //
+        // We need to check that proofCommitment == keccak256(seal | journal)
+        // where journal is the public output of the Risc0 envelope program.
+        // It must be equal to [imageHash | publicKey | blobCommitment]
+        //
+        // It is currently not feasible to do this check onchain because seal size
+        // is very large.
+
         // TODO: verify that blob was included in Celestia block
-        // TODO: verify that proof receipt contains the same blob commitment and buyer's public key
-        // TODO: ensure emvelope program ID is the same
-        idToMarketItem[itemId].seller.transfer(idToMarketItem[itemId].price);
+        
+        uint256 amount = idToMarketItem[itemId].price;
+        idToMarketItem[itemId].seller.transfer(amount);
         idToMarketItem[itemId].status = ItemStatus.Sold;
     }
 
@@ -122,6 +167,10 @@ contract Market is ReentrancyGuard {
         }
 
         return items;
+    }
+
+    function fetchItem(uint256 itemId) public view returns (MarketItem memory) {
+        return idToMarketItem[itemId];
     }
 
     function fetchMyItems() public view returns (MarketItem[] memory) {
