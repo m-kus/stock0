@@ -10,6 +10,8 @@ Follow instructions and install all dependencies, celestia-node and start light 
 2. https://docs.celestia.org/nodes/celestia-node
 3. https://docs.celestia.org/developers/node-tutorial - Run Light Node on Arabica network.
 
+> Do not forget to receive tokens from Arabica faucet from Celestia Discourd.
+
 ---
 
 ## Prepare Tools for Sending Blob:
@@ -25,27 +27,29 @@ export CELESTIA_NODE_AUTH_TOKEN=$(celestia light auth admin --p2p.network arabic
 
 ## Send Blob
 
+> use submit-blob.py instead.
+
 ```
 base64 file_with_blob > base64_blob
 export BLOB_BASE64=$(cat base64_blob)
 export NAMESPACE="AAAAAAAAAAAAAAAAAAAAAAAAAAECAwQFBgcICRA="
 // calculate $COMMITMENT
 
-curl -H "Content-Type: application/json" -H "Authorization: Bearer $CELESTIA_NODE_AUTH_TOKEN" -X POST --data '{"id": 1
-  "jsonrpc": "2.0",
-  "method": "blob.Submit",
-  "params": [
+curl -H "Content-Type: application/json" -H "Authorization: Bearer $CELESTIA_NODE_AUTH_TOKEN" -X POST --data "{'id': 1
+  'jsonrpc': '2.0',
+  'method': 'blob.Submit',
+  'params': [
     [
       {
-        "namespace": $NAMESPACE,
-        "data": $BLOB_BASE64,
-        "share_version": 0,
-        "commitment": $COMMITMENT
+        'namespace': $NAMESPACE,
+        'data': $BLOB_BASE64,
+        'share_version': 0,
+        'commitment': $COMMITMENT
       }
     ],
     0.1
   ]
-}' 127.0.0.1:26658
+}" 127.0.0.1:26658
 
 ```
 
@@ -58,15 +62,15 @@ Result:
 ## Get Proof for Blob
 
 ```
-{
-  "id": 1,
-  "jsonrpc": "2.0",
-  "method": "blob.GetProof",
-  "params": [
-    42,
-    $NAMESPACE,
-    $COMMITMENT
-  ]
-}
+ curl -H "Content-Type: application/json" -H "Authorization: Bearer $CELESTIA_NODE_AUTH_TOKEN" -X POST --data "{
+   'id': 1,
+   'jsonrpc': '2.0',
+   'method': 'blob.GetProof',
+   'params': [
+     42,
+     '$NAMESPACE',
+     ''$COMMITMENT'
+   ]
+}" 127.0.0.1:26658
 ```
 
