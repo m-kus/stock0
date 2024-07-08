@@ -85,6 +85,13 @@ export default function Home() {
 						>
 							<img src={item.thumbnailUri} className='w-full object-contain' />
 
+							<div className='p-4'>
+								<p className='h-8 text-1xl font-semibold'>Verified source image</p>
+								<p className='text-gray-400'>The preview you see is proven to be derived from a cryptographically signed image.</p>
+								<br/>
+								<a className='font-light underline' style={{ color: "#434891" }} href={`https://verify.contentauthenticity.org/inspect?source=${item.thumbnailUri}`} target='_blank'>Inspect C2PA manifest ⤴</a>
+							</div>
+
 							<div className='p-4 bg-black'>
 								<p className='text-2xl mb-4 font-bold text-white'>
 									{item.price} ETH

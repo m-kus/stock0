@@ -7,6 +7,7 @@ import { marketContractAddress } from '../config';
 import { pinFileToIPFS } from '../helpers/pinFileToIpfs';
 import { pinJSONToIPFS } from '../helpers/pinJsonToIpfs';
 import { getUrlFromIpfsCID } from '../helpers/getUrlFromIpfsHash';
+import { decodeVerificationData } from '../helpers/verificationData';
 import { CID } from 'multiformats/cid'
 
 export default function CreateItem() {
@@ -14,6 +15,7 @@ export default function CreateItem() {
 	const [formInput, setFormInput] = useState({
 		price: '',
 		manifest: '',
+		verificationData: '',
 	});
 	const router = useRouter();
 
@@ -30,9 +32,9 @@ export default function CreateItem() {
 	};
 
 	const createItem = async () => {
-		const { price, manifest } = formInput;
-		console.log("New item: ", price, manifest, file);
-		if (!price || !manifest || !file) return;
+		const { price, manifest, verificationData } = formInput;
+		console.log("New item: ", price, manifest, file, verificationData);
+		if (!price || !manifest || !file || !verificationData) return;
 
 		try {
 			const manifestFile = await pinJSONToIPFS(JSON.stringify(manifest));
@@ -48,13 +50,13 @@ export default function CreateItem() {
 			const priceInWei = parseInt(parseFloat(price) * Math.pow(10,18));
 			console.log("Image ", CID.parse(file).multihash);
 
-			await createNewItem(manifestHashBytes, thumbnailHashBytes, imageHashBytes, priceInWei);
+			await createNewItem(manifestHashBytes, thumbnailHashBytes, imageHashBytes, priceInWei, verificationData);
 		} catch (error) {
 			console.log('error', error);
 		}
 	};
 
-	const createNewItem = async (manifestIpfsHash, thumbnailHash, imageHash, priceInWei) => {
+	const createNewItem = async (manifestIpfsHash, thumbnailHash, imageHash, priceInWei, verificationData) => {
 		const modal = new Web3Modal();
 		const connection = await modal.connect();
 		const provider = new ethers.providers.Web3Provider(connection);
@@ -77,6 +79,7 @@ export default function CreateItem() {
 			thumbnailHash,
 			manifestIpfsHash,
 			priceInWei,
+			...decodeVerificationData(verificationData),
 			{ maxFeePerGas: 875000000 }
 		);
 		console.log("create new item tx: ", marketTransaction);
@@ -109,9 +112,9 @@ export default function CreateItem() {
 				<textarea
 					className='mt-8 border rounded p-4 code'
 					placeholder='Verification data in JSON [provided by Aligned batcher]'
-					// onChange={(e) =>
-					// 	setFormInput((prev) => ({ ...prev, manifest: e.target.value }))
-					// }
+					onChange={(e) =>
+						setFormInput((prev) => ({ ...prev, verificationData: e.target.value }))
+					}
 				/>
 				
 				<div className="border mt-8 p-4 rounded flex flex-col">
@@ -132,10 +135,11 @@ export default function CreateItem() {
 					disabled={
 						!formInput.price ||
 						!formInput.manifest ||
+						!formInput.verificationData ||
 						!file
 					}
 				>
-					Create image offer
+					Create image offering
 				</button>
 			</div>
 		</div>

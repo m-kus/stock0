@@ -1,0 +1,125 @@
+{
+    "active_manifest": "urn:uuid:335bf0ac-ec11-4421-8193-33b9c7ab659d",
+    "manifests": {
+      "urn:uuid:335bf0ac-ec11-4421-8193-33b9c7ab659d": {
+        "claim": {
+          "dc:title": "Test",
+          "dc:format": "image/jpeg",
+          "instanceID": "xmp:iid:ff7940cc-bbcf-44c2-93f9-1f4fbbcf0344",
+          "claim_generator": "Test c2patool/0.9.4 c2pa-rs/0.32.4",
+          "claim_generator_info": null,
+          "signature": "self#jumbf=c2pa.signature",
+          "assertions": [
+            {
+              "url": "self#jumbf=c2pa.assertions/c2pa.thumbnail.claim.jpeg",
+              "hash": "g4jvrFd6hvusad6RJkxq+U5XYNqaT85VdAk5CtX2/T8="
+            },
+            {
+              "url": "self#jumbf=c2pa.assertions/stds.schema-org.Test",
+              "hash": "QwGYL4YR4Eu9YvSMM8ocevXePh3a1yuh3iHqEafupZ4="
+            },
+            {
+              "url": "self#jumbf=c2pa.assertions/c2pa.actions",
+              "hash": "RyPAGuEI/oBNPiiUzEK0qEjytDKMadcw5KRoh21Wxjg="
+            },
+            {
+              "url": "self#jumbf=c2pa.assertions/my.assertion",
+              "hash": "eaDARq9ciJTv7+oQtoyjYXeQ6vhbCrAtQ2bnbGcWhEs="
+            },
+            {
+              "url": "self#jumbf=c2pa.assertions/c2pa.hash.data",
+              "hash": "JeyzSwCP73WTneOkImcjOTy+nj0BdrFdiX7u8HKU5O0="
+            }
+          ],
+          "alg": "sha256"
+        },
+        "assertion_store": {
+          "stds.schema-org.Test": {
+            "@context": "https://schema.org",
+            "@type": "Test",
+            "author": [
+              {
+                "@type": "Person",
+                "name": "Test"
+              }
+            ]
+          },
+          "c2pa.thumbnail.claim.jpeg": "<omitted> len = 14611",
+          "c2pa.actions": {
+            "actions": [
+              {
+                "action": "c2pa.opened"
+              }
+            ],
+            "metadata": {
+              "reviewRatings": [
+                {
+                  "explanation": "Test",
+                  "code": "c2pa.unknown",
+                  "value": 4
+                }
+              ]
+            }
+          },
+          "my.assertion": {
+            "any_tag": " DESCRIPTION"
+          },
+          "c2pa.hash.data": {
+            "exclusions": [
+              {
+                "start": 20,
+                "length": 34289
+              }
+            ],
+            "name": "jumbf manifest",
+            "alg": "sha256",
+            "hash": "qap09QAZMCX8Kri/0YP8X9DgPTTF56ZrEAVXNaXX/5c=",
+            "pad": "<omitted>"
+          }
+        },
+        "signature": {
+          "alg": "ps256",
+          "issuer": "C2PA Test Signing Cert",
+          "time": "2024-07-07T15:14:41+00:00"
+        }
+      }
+    },
+    "validation_status": [
+      {
+        "code": "claimSignature.validated",
+        "url": "self#jumbf=/c2pa/urn:uuid:335bf0ac-ec11-4421-8193-33b9c7ab659d/c2pa.signature",
+        "explanation": "claim signature valid"
+      },
+      {
+        "code": "assertion.hashedURI.match",
+        "url": "self#jumbf=c2pa.assertions/c2pa.thumbnail.claim.jpeg",
+        "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim.jpeg"
+      },
+      {
+        "code": "assertion.hashedURI.match",
+        "url": "self#jumbf=c2pa.assertions/stds.schema-org.Test",
+        "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/stds.schema-org.Test"
+      },
+      {
+        "code": "assertion.hashedURI.match",
+        "url": "self#jumbf=c2pa.assertions/c2pa.actions",
+        "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions"
+      },
+      {
+        "code": "assertion.hashedURI.match",
+        "url": "self#jumbf=c2pa.assertions/my.assertion",
+        "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/my.assertion"
+      },
+      {
+        "code": "assertion.hashedURI.match",
+        "url": "self#jumbf=c2pa.assertions/c2pa.hash.data",
+        "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+      },
+      {
+        "code": "assertion.dataHash.match",
+        "url": "self#jumbf=/c2pa/urn:uuid:335bf0ac-ec11-4421-8193-33b9c7ab659d/c2pa.assertions/c2pa.hash.data",
+        "explanation": "data hash valid"
+      }
+    ]
+  }
+  
