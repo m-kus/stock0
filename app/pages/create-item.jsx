@@ -9,12 +9,13 @@ import { pinJSONToIPFS } from '../helpers/pinJsonToIpfs';
 import { getUrlFromIpfsCID } from '../helpers/getUrlFromIpfsHash';
 import { decodeVerificationData } from '../helpers/verificationData';
 import { CID } from 'multiformats/cid'
+import { base64ToUint8Array, convertPriceToWei } from '../helpers/converters';
 
 export default function CreateItem() {
 	const [file, setFile] = useState(null);
+	const [manifestFile, setManifestFile] = useState(null);
 	const [formInput, setFormInput] = useState({
 		price: '',
-		manifest: '',
 		verificationData: '',
 	});
 	const router = useRouter();
@@ -31,23 +32,28 @@ export default function CreateItem() {
 		}
 	};
 
+	const onChangeManifest = async (e) => {
+		try {
+			const manifest = e.target.files[0];
+			const manifestLink = await pinFileToIPFS(manifest);
+			console.log('Manifest file on IPFS: ', manifestLink);
+			// TODO: extract SHA256 hash from multihash
+			setManifestFile(manifestLink.IpfsHash);
+		} catch (error) {
+			console.log('error', error);
+		}
+	};
+
 	const createItem = async () => {
-		const { price, manifest, verificationData } = formInput;
-		console.log("New item: ", price, manifest, file, verificationData);
-		if (!price || !manifest || !file || !verificationData) return;
+		const { price } = formInput;
+		console.log("New item: ", price, manifestFile, file);
+		if (!price || !manifestFile || !file) return;
 
 		try {
-			const manifestFile = await pinJSONToIPFS(JSON.stringify(manifest));
-			console.log("Manifest file: ", manifestFile);
-
-			// TODO: extract image hash from manifest
-
-			console.log("Manifest CID ", CID.parse(file));
-
-			const manifestHashBytes = CID.parse(manifestFile.IpfsHash).bytes;
+			const manifestHashBytes = CID.parse(manifestFile).bytes;
 			const thumbnailHashBytes = CID.parse(file).multihash.digest;
 			const imageHashBytes = CID.parse(file).bytes;
-			const priceInWei = parseInt(parseFloat(price) * Math.pow(10,18));
+			const priceInWei = convertPriceToWei(price);
 			console.log("Image ", CID.parse(file).multihash);
 
 			await createNewItem(manifestHashBytes, thumbnailHashBytes, imageHashBytes, priceInWei, verificationData);
@@ -100,12 +106,8 @@ export default function CreateItem() {
 					onChange={(e) =>
 						setFormInput((prev) => ({ ...prev, price: e.target.value }))
 					}
-				/>
-				<textarea
-					className='mt-8 border rounded p-4 code'
-					placeholder='C2PA manifest in JSON [must contain signed datahash claim]'
-					onChange={(e) =>
-						setFormInput((prev) => ({ ...prev, manifest: e.target.value }))
+					onChangeManifest={(e) =>
+						setFormInput((prev) => ({ ...prev, price: e.target.value }))
 					}
 				/>
 
@@ -116,14 +118,20 @@ export default function CreateItem() {
 						setFormInput((prev) => ({ ...prev, verificationData: e.target.value }))
 					}
 				/>
-				
+
 				<div className="border mt-8 p-4 rounded flex flex-col">
-					<label style={{color: '#999'}}>Thumbnail file in PNG format [produced by Risc0 program]</label>
-					<input type='file' name='Thumbnail' className='my-4' onChange={onChange} />
-					{file && <img src={getUrlFromIpfsCID(file)} className='rounded py-2' style={{ width: "75px"}} />}
+					<label style={{ color: '#999' }}>C2PA Manifest file [produced by c2patool]</label>
+					<input type='file' name='Manifest' className='my-4' onChange={onChangeManifest} />
+					{file}
 				</div>
 
-				<label className='mt-4' style={{color: '#999', fontSize: '12px'}}>
+				<div className="border mt-8 p-4 rounded flex flex-col">
+					<label style={{ color: '#999' }}>Thumbnail file in PNG format [produced by Risc0 program]</label>
+					<input type='file' name='Thumbnail' className='my-4' onChange={onChange} />
+					{file && <img src={getUrlFromIpfsCID(file)} className='rounded py-2' style={{ width: "75px" }} />}
+				</div>
+
+				<label className='mt-4' style={{ color: '#999', fontSize: '12px' }}>
 					Stock0 will extract original image size from C2PA manifest and calculate thumbnail hash given the provided file:
 					combined they must match the Risc0 journal (public output), so if the Aligned manager contract accepts
 					the verification data then we will know that this thumbnail was <b>actually derived</b> from the original image.
@@ -134,7 +142,7 @@ export default function CreateItem() {
 					onClick={createItem}
 					disabled={
 						!formInput.price ||
-						!formInput.manifest ||
+						!manifestFile ||
 						!formInput.verificationData ||
 						!file
 					}
