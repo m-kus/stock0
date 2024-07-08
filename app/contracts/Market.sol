@@ -13,10 +13,15 @@ contract Market is ReentrancyGuard {
     bytes32 private _envelopeProgramId;
     address private _alignedManagerContract;
 
-    constructor(bytes32 thumbnailProgramId, bytes32 envelopeProgramId, address alignedManagerContract) {
+    constructor(
+        bytes32 thumbnailProgramId,
+        bytes32 envelopeProgramId
+    ) //  , address alignedManagerContract
+    {
         _thumbnailProgramId = thumbnailProgramId;
         _envelopeProgramId = envelopeProgramId;
-        _alignedManagerContract = alignedManagerContract;
+        // _alignedManagerContract = alignedManagerContract;
+        _alignedManagerContract = 0x58F280BeBE9B34c9939C3C39e0890C81f163B623;
     }
 
     enum ItemStatus {
