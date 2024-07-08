@@ -55,21 +55,21 @@ curl -H "Content-Type: application/json" -H "Authorization: Bearer $CELESTIA_NOD
 
 Result:
 ```
-
+{'id': 1, 'jsonrpc': '2.0', 'result': 1433193}
 ```
 
 
 ## Get Proof for Blob
 
 ```
- curl -H "Content-Type: application/json" -H "Authorization: Bearer $CELESTIA_NODE_AUTH_TOKEN" -X POST --data "{
+ curl -H "Content-Type: application/json" -H "Authorization: Bearer $CELESTIA_NODE_AUTH_TOKEN" -X POST --data ""{
    'id': 1,
    'jsonrpc': '2.0',
    'method': 'blob.GetProof',
    'params': [
-     42,
+     1433193,
      '$NAMESPACE',
-     ''$COMMITMENT'
+     '$COMMITMENT'
    ]
 }" 127.0.0.1:26658
 ```
