@@ -103,9 +103,6 @@ export default function CreateItem() {
 					onChange={(e) =>
 						setFormInput((prev) => ({ ...prev, price: e.target.value }))
 					}
-					onChangeManifest={(e) =>
-						setFormInput((prev) => ({ ...prev, price: e.target.value }))
-					}
 				/>
 
 				<textarea
