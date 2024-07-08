@@ -1,5 +1,10 @@
+use std::fs::{create_dir_all, File};
+use std::io::Write;
+use std::path::PathBuf;
+
 use celestia_types::nmt::NamespacedHashExt;
 use celestia_types::hash::Hash;
+use celestia_types::Commitment;
 use celestia_types::{nmt::Namespace, Blob, ExtendedHeader};
 use nmt_rs::simple_merkle::db::MemDb;
 use nmt_rs::simple_merkle::tree::MerkleTree;
@@ -70,6 +75,12 @@ fn main() {
     let first_row_index: usize = blob_index / ods_size;
     let last_row_index: usize = first_row_index + (blob_size / ods_size);
 
+    // Calculate blob commitment
+    let blob_commitment = Commitment::from_blob(my_namespace, 0, blob_bytes)
+        .expect("Failed to create commitment");
+
+    println!("BLOB COMMITMENT: {}", base64::encode(blob_commitment.0));
+
     // For each row spanned by the blob, you should have one NMT range proof into a row root.
     assert_eq!(proofs.len(), last_row_index + 1 - first_row_index);
 
@@ -115,4 +126,30 @@ fn main() {
 
     // Check that everything is OK
     prove_info.receipt.verify(BLOB_ID).expect("failed to verify");
+
+    let mode = if std::env::var_os("RISC0_DEV_MODE").is_some_and(|x| x == "1") {
+        "dev"
+    } else {
+        "prod"
+    };
+    let output_dir: PathBuf = [env!("CARGO_MANIFEST_DIR"), "..", "target", mode, "envelope"]
+        .iter()
+        .collect();
+    create_dir_all(output_dir.as_path()).unwrap();
+
+    let receipt_bytes = bincode::serialize(&prove_info.receipt).unwrap();
+    let mut receipt_file = File::create(output_dir.join("receipt")).unwrap();
+    receipt_file.write_all(&receipt_bytes).unwrap();
+
+    let image_id_bytes = convert_image_id(&BLOB_ID);
+    let mut image_id_file = File::create(output_dir.join("image_id")).unwrap();
+    image_id_file.write_all(&image_id_bytes).unwrap();
+}
+
+pub fn convert_image_id(data: &[u32; 8]) -> [u8; 32] {
+    let mut res = [0; 32];
+    for i in 0..8 {
+        res[4 * i..4 * (i + 1)].copy_from_slice(&data[i].to_le_bytes());
+    }
+    res
 }

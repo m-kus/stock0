@@ -1,7 +1,6 @@
-use celestia_types::nmt::{MerkleHash, Namespace, NamespaceProof, NamespacedHashExt};
+use celestia_types::{nmt::{MerkleHash, Namespace, NamespaceProof, NamespacedHashExt}, Commitment, Share};
 use nmt_rs::{simple_merkle::proof::Proof, NamespacedHash, TmSha2Hasher};
 use risc0_zkvm::guest::env;
-
 
 fn main() {
     // read the data root
@@ -43,11 +42,7 @@ fn main() {
         let proof = &proofs[i as usize];
         let root = &row_roots[i as usize];
         let end = start + (proof.end_idx() as usize - proof.start_idx() as usize);
-        let result = proof.verify_range(root, &shares[start..end], namespace.into());
-        if result.is_err() {
-            env::commit(&false);
-            return;
-        }
+        proof.verify_range(root, &shares[start..end], namespace.into()).unwrap();
         start = end;
     }
 
@@ -58,17 +53,17 @@ fn main() {
         .map(|root| tm_hasher.hash_leaf(&root.to_array()))
         .collect();
 
-    let result = range_proof.verify_range(
+    range_proof.verify_range(
         &data_root
             .try_into()
             .expect("we already checked, this should be fine"),
         &blob_row_root_hashes,
-    );
-    if result.is_err() {
-        println!("range proof failed :(");
-        println!("{:?}", result);
-        env::commit(&false);
-        return;
-    }
-    env::commit(&true);
+    ).unwrap();
+
+    // Calculate blob commitment
+    let blob_shares: Vec<Share> = shares.into_iter().map(|s| Share::from_raw(&s).unwrap()).collect();
+    let blob_commitment = Commitment::from_shares(namespace, &blob_shares)
+        .expect("Failed to create commitment");
+
+    env::commit_slice(&[data_root, blob_commitment.0].concat());
 }

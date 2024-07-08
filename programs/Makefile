@@ -14,3 +14,6 @@ envelope-proof:
 
 blobshot:
 	RUST_LOG="[executor]=info" RISC0_DEV_MODE=1 cargo run --bin blobshot
+
+blobshot-proof:
+	cargo run --bin blobshot
