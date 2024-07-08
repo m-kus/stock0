@@ -45,9 +45,9 @@ export default function CreateItem() {
 	};
 
 	const createItem = async () => {
-		const { price } = formInput;
-		console.log("New item: ", price, manifestFile, file);
-		if (!price || !manifestFile || !file) return;
+		const { price, verificationData } = formInput;
+		console.log("New item: ", price, verificationData, manifestFile, file);
+		if (!price || !manifestFile || !file || !verificationData) return;
 
 		try {
 			const manifestHashBytes = CID.parse(manifestFile).bytes;

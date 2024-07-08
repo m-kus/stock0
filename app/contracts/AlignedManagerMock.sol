@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-contract AlignedManagerMock  {
+/* contract AlignedManagerMock  {
     function verifyBatchInclusion(
         bytes32 proofCommitment,
         bytes32 pubInputCommitment,
@@ -13,4 +13,4 @@ contract AlignedManagerMock  {
     ) external view returns (bool) {
         return true;
     }
-}
+} */
