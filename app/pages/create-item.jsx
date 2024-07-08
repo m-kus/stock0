@@ -8,6 +8,7 @@ import { pinFileToIPFS } from '../helpers/pinFileToIpfs';
 import { pinJSONToIPFS } from '../helpers/pinJsonToIpfs';
 import { getUrlFromIpfsCID } from '../helpers/getUrlFromIpfsHash';
 import { CID } from 'multiformats/cid'
+import { base64ToUint8Array, convertPriceToWei } from '../helpers/converters';
 
 export default function CreateItem() {
 	const [file, setFile] = useState(null);
@@ -38,14 +39,19 @@ export default function CreateItem() {
 			const manifestFile = await pinJSONToIPFS(JSON.stringify(manifest));
 			console.log("Manifest file: ", manifestFile);
 
-			// TODO: extract image hash from manifest
+			const manifestObj = JSON.parse(manifest);
+			const assertions = manifestObj.manifests[manifestObj.active_manifest].claim.assertions;
+			const hashDataAssertion = assertions.find(assertion => assertion.url === "self#jumbf=c2pa.assertions/c2pa.hash.data");
+			const hash = hashDataAssertion ? hashDataAssertion.hash : null;
+			console.log("C2PA Data Hash ", hash);  // Outputs the hash value
+			const uint8ArrayHash = base64ToUint8Array(hash);
 
 			console.log("Manifest CID ", CID.parse(file));
 
 			const manifestHashBytes = CID.parse(manifestFile.IpfsHash).bytes;
 			const thumbnailHashBytes = CID.parse(file).multihash.digest;
-			const imageHashBytes = CID.parse(file).bytes;
-			const priceInWei = parseInt(parseFloat(price) * Math.pow(10,18));
+			const imageHashBytes = uint8ArrayHash;
+			const priceInWei = convertPriceToWei(price);
 			console.log("Image ", CID.parse(file).multihash);
 
 			await createNewItem(manifestHashBytes, thumbnailHashBytes, imageHashBytes, priceInWei);
@@ -109,18 +115,18 @@ export default function CreateItem() {
 				<textarea
 					className='mt-8 border rounded p-4 code'
 					placeholder='Verification data in JSON [provided by Aligned batcher]'
-					// onChange={(e) =>
-					// 	setFormInput((prev) => ({ ...prev, manifest: e.target.value }))
-					// }
+				// onChange={(e) =>
+				// 	setFormInput((prev) => ({ ...prev, manifest: e.target.value }))
+				// }
 				/>
-				
+
 				<div className="border mt-8 p-4 rounded flex flex-col">
-					<label style={{color: '#999'}}>Thumbnail file in PNG format [produced by Risc0 program]</label>
+					<label style={{ color: '#999' }}>Thumbnail file in PNG format [produced by Risc0 program]</label>
 					<input type='file' name='Thumbnail' className='my-4' onChange={onChange} />
-					{file && <img src={getUrlFromIpfsCID(file)} className='rounded py-2' style={{ width: "75px"}} />}
+					{file && <img src={getUrlFromIpfsCID(file)} className='rounded py-2' style={{ width: "75px" }} />}
 				</div>
 
-				<label className='mt-4' style={{color: '#999', fontSize: '12px'}}>
+				<label className='mt-4' style={{ color: '#999', fontSize: '12px' }}>
 					Stock0 will extract original image size from C2PA manifest and calculate thumbnail hash given the provided file:
 					combined they must match the Risc0 journal (public output), so if the Aligned manager contract accepts
 					the verification data then we will know that this thumbnail was <b>actually derived</b> from the original image.

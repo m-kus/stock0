@@ -4,6 +4,7 @@
 
 Use node 18 to install deps
 ```
+nvm use 18
 npm i
 ```
 
@@ -24,5 +25,6 @@ npx hardhat run scripts/deploy.js --network localhost
 
 Use node 16 to run (don't ask)
 ```
+nvm use 16
 npm run dev
 ```
