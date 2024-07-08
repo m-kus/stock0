@@ -1,13 +1,19 @@
-.PHONY: thumbnail envelope
+.PHONY: thumbnail envelope blobshot
 
 thumbnail:
 	RUST_LOG="[executor]=info" RISC0_DEV_MODE=1 cargo run --bin thumbnail
 
 thumbnail-proof:
-	 cargo run --bin thumbnail
+	cargo run --bin thumbnail
 
 envelope:
 	RUST_LOG="[executor]=info" RISC0_DEV_MODE=1 cargo run --bin envelope
 
 envelope-proof:
-	 cargo run --bin envelope
+	cargo run --bin envelope
+
+blobshot:
+	RUST_LOG="[executor]=info" RISC0_DEV_MODE=1 cargo run --bin blobshot
+
+blobshot-proof:
+	cargo run --bin blobshot

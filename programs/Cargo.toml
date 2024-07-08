@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["thumbnail", "envelope", "envelope/methods/guest", "thumbnail/methods/guest"]
+members = ["thumbnail", "envelope", "blobshot", "envelope/methods/guest", "thumbnail/methods/guest", "blobshot/methods/guest"]
 
 # Always optimize; building and running the guest takes much longer without optimization.
 [profile.dev]

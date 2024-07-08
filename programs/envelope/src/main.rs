@@ -54,10 +54,18 @@ fn main() {
     let mut receipt_file = File::create(output_dir.join("receipt")).unwrap();
     receipt_file.write_all(&receipt_bytes).unwrap();
 
-    let image_id_bytes = ENVELOPE_GEN_ID.map(|limb| limb.to_be_bytes()).concat();
+    let image_id_bytes = convert_image_id(&ENVELOPE_GEN_ID);
     let mut image_id_file = File::create(output_dir.join("image_id")).unwrap();
     image_id_file.write_all(&image_id_bytes).unwrap();
 
     let mut blob_file = File::create(output_dir.join("blob")).unwrap();
     blob_file.write_all(&blob).unwrap();
+}
+
+pub fn convert_image_id(data: &[u32; 8]) -> [u8; 32] {
+    let mut res = [0; 32];
+    for i in 0..8 {
+        res[4 * i..4 * (i + 1)].copy_from_slice(&data[i].to_le_bytes());
+    }
+    res
 }
