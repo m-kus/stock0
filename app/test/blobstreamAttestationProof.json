@@ -1,0 +1,14 @@
+{
+    "tupleRootNonce": "",
+    "data_root_tuple": {
+        "data_root": "",
+        "height": ""
+    },
+    "binary_merkle_proof": {
+        "side_nodes": [
+            ""
+        ],
+        "key": "",
+        "num_leaves": ""
+    }
+}
