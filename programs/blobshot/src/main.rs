@@ -132,7 +132,7 @@ fn main() {
     } else {
         "prod"
     };
-    let output_dir: PathBuf = [env!("CARGO_MANIFEST_DIR"), "..", "target", mode, "envelope"]
+    let output_dir: PathBuf = [env!("CARGO_MANIFEST_DIR"), "..", "target", mode, "blobshot"]
         .iter()
         .collect();
     create_dir_all(output_dir.as_path()).unwrap();
