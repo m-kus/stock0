@@ -12,9 +12,9 @@ import { base64ToUint8Array, convertPriceToWei } from '../helpers/converters';
 
 export default function CreateItem() {
 	const [file, setFile] = useState(null);
+	const [manifestFile, setManifestFile] = useState(null);
 	const [formInput, setFormInput] = useState({
 		price: '',
-		manifest: '',
 	});
 	const router = useRouter();
 
@@ -30,27 +30,27 @@ export default function CreateItem() {
 		}
 	};
 
+	const onChangeManifest = async (e) => {
+		try {
+			const manifest = e.target.files[0];
+			const manifestLink = await pinFileToIPFS(manifest);
+			console.log('Manifest file on IPFS: ', manifestLink);
+			// TODO: extract SHA256 hash from multihash
+			setManifestFile(manifestLink.IpfsHash);
+		} catch (error) {
+			console.log('error', error);
+		}
+	};
+
 	const createItem = async () => {
-		const { price, manifest } = formInput;
-		console.log("New item: ", price, manifest, file);
-		if (!price || !manifest || !file) return;
+		const { price } = formInput;
+		console.log("New item: ", price, manifestFile, file);
+		if (!price || !manifestFile || !file) return;
 
 		try {
-			const manifestFile = await pinJSONToIPFS(JSON.stringify(manifest));
-			console.log("Manifest file: ", manifestFile);
-
-			const manifestObj = JSON.parse(manifest);
-			const assertions = manifestObj.manifests[manifestObj.active_manifest].claim.assertions;
-			const hashDataAssertion = assertions.find(assertion => assertion.url === "self#jumbf=c2pa.assertions/c2pa.hash.data");
-			const hash = hashDataAssertion ? hashDataAssertion.hash : null;
-			console.log("C2PA Data Hash ", hash);  // Outputs the hash value
-			const uint8ArrayHash = base64ToUint8Array(hash);
-
-			console.log("Manifest CID ", CID.parse(file));
-
-			const manifestHashBytes = CID.parse(manifestFile.IpfsHash).bytes;
+			const manifestHashBytes = CID.parse(manifestFile).bytes;
 			const thumbnailHashBytes = CID.parse(file).multihash.digest;
-			const imageHashBytes = uint8ArrayHash;
+			const imageHashBytes = CID.parse(file).bytes;
 			const priceInWei = convertPriceToWei(price);
 			console.log("Image ", CID.parse(file).multihash);
 
@@ -103,12 +103,8 @@ export default function CreateItem() {
 					onChange={(e) =>
 						setFormInput((prev) => ({ ...prev, price: e.target.value }))
 					}
-				/>
-				<textarea
-					className='mt-8 border rounded p-4 code'
-					placeholder='C2PA manifest in JSON [must contain signed datahash claim]'
-					onChange={(e) =>
-						setFormInput((prev) => ({ ...prev, manifest: e.target.value }))
+					onChangeManifest={(e) =>
+						setFormInput((prev) => ({ ...prev, price: e.target.value }))
 					}
 				/>
 
@@ -119,6 +115,12 @@ export default function CreateItem() {
 				// 	setFormInput((prev) => ({ ...prev, manifest: e.target.value }))
 				// }
 				/>
+
+				<div className="border mt-8 p-4 rounded flex flex-col">
+					<label style={{ color: '#999' }}>C2PA Manifest file [produced by c2patool]</label>
+					<input type='file' name='Thumbnail' className='my-4' onChange={onChangeManifest} />
+					{file}
+				</div>
 
 				<div className="border mt-8 p-4 rounded flex flex-col">
 					<label style={{ color: '#999' }}>Thumbnail file in PNG format [produced by Risc0 program]</label>
@@ -137,7 +139,7 @@ export default function CreateItem() {
 					onClick={createItem}
 					disabled={
 						!formInput.price ||
-						!formInput.manifest ||
+						!manifestFile ||
 						!file
 					}
 				>
