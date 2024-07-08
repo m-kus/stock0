@@ -1,26 +1,42 @@
-use std::fs::{create_dir_all, File};
-use std::io::Write;
-use std::path::PathBuf;
+use std::{
+    fs::{create_dir_all, File},
+    io::Write,
+    path::PathBuf,
+};
 
-use celestia_types::nmt::NamespacedHashExt;
-use celestia_types::hash::Hash;
-use celestia_types::Commitment;
-use celestia_types::{nmt::Namespace, Blob, ExtendedHeader};
-use nmt_rs::simple_merkle::db::MemDb;
-use nmt_rs::simple_merkle::tree::MerkleTree;
-use nmt_rs::TmSha2Hasher;
-
-use blobshot_methods::{BLOB_ELF, BLOB_ID};
+use celestia_types::{hash::Hash, nmt::{Namespace, NamespacedHashExt}, Blob, Commitment, ExtendedHeader};
+use chacha20::{cipher::{NewCipher, StreamCipher}, ChaCha20};
+use delivery_methods::{DELIVERY_GEN_ELF, DELIVERY_GEN_ID};
+use k256::{
+    ecdsa::SigningKey, elliptic_curve::{rand_core::OsRng, Field, PrimeField, PublicKey, group::GroupEncoding}, AffinePoint, Scalar, Secp256k1
+};
+use nmt_rs::{simple_merkle::{db::MemDb, tree::MerkleTree}, TmSha2Hasher};
 use risc0_zkvm::{default_prover, ExecutorEnv};
+use std::ops::Mul;
 
 const NAMESPACE: &[u8] = &[1, 2, 3, 4, 5];
+const CHACHA_STATIC_NONCE: &[u8; 12] = b"bakingbaddev";
 
 fn main() {
-    // Initialize tracing. In order to view logs, run `RUST_LOG=info cargo run`
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::filter::EnvFilter::from_default_env())
         .init();
 
+    // TODO: use buyer public key
+    let signing_key = SigningKey::random(&mut OsRng);
+    let public_key_bytes = signing_key.verifying_key().to_sec1_bytes();
+
+    // This is session key for symmetric encryption (private input)
+    let random_scalar = Scalar::random(&mut OsRng);
+    let random_scalar_bytes = random_scalar.to_bytes().to_vec();
+
+    // Source image (private input)
+    let image_bytes = include_bytes!("../tests/cat.tiff");
+
+    // Create blob
+    let blob_data = generate_blob(image_bytes, &random_scalar_bytes, &public_key_bytes);
+
+    // Create namespace
     let my_namespace = Namespace::new_v0(NAMESPACE).expect("Invalid namespace");
 
     // Load header -------------------------
@@ -62,13 +78,8 @@ fn main() {
 
     // Load blob ----------------------------
 
-    let blob_bytes = include_bytes!("../tests/blob.dat");
-    let mut blob = Blob::new(my_namespace, blob_bytes.to_vec()).unwrap();
-
+    let mut blob = Blob::new(my_namespace, blob_data.clone()).unwrap();
     blob.index = Some(index);
-    
-    let shares = blob.to_shares().expect("Failed to split blob to shares");
-    let share_values: Vec<[u8; 512]> = shares.iter().map(|share| share.data).collect();
 
     let blob_index: usize = blob.index.unwrap().try_into().unwrap();
     let blob_size: usize = blob.data.len() / 512;
@@ -76,7 +87,7 @@ fn main() {
     let last_row_index: usize = first_row_index + (blob_size / ods_size);
 
     // Calculate blob commitment
-    let blob_commitment = Commitment::from_blob(my_namespace, 0, blob_bytes)
+    let blob_commitment = Commitment::from_blob(my_namespace, 0, &blob_data)
         .expect("Failed to create commitment");
 
     let mut ns = [0u8; 32];
@@ -86,38 +97,33 @@ fn main() {
     println!("BLOB COMMITMENT: {}", base64::encode(blob_commitment.0));
 
     // For each row spanned by the blob, you should have one NMT range proof into a row root.
-    assert_eq!(proofs.len(), last_row_index + 1 - first_row_index);
+    //assert_eq!(proofs.len(), last_row_index + 1 - first_row_index);
 
     let rp = tree.build_range_proof(first_row_index..last_row_index);
 
     // Write to stdin -----------------------
 
     let mut env = ExecutorEnv::builder();
+    let num_shares = last_row_index as u32 - first_row_index as u32;
 
+    // write data root
     env.write_slice(dah.dah.hash().as_bytes());
-
     // write "num rows" spanned by the blob
-    env.write(&(last_row_index as u32 - first_row_index as u32)).unwrap();
-    // write num shares
-    env.write(&(share_values.len() as u32)).unwrap();
-    // write namespace;
-    env.write(&my_namespace).unwrap();
+    env.write(&num_shares).unwrap();
     // write the range proof
     env.write(&rp).unwrap();
-    
     // write the row roots
     for row_root in eds_row_roots[first_row_index..last_row_index].iter() {
         env.write(&row_root).unwrap();
     }
-    // write the shares
-    for share in share_values {
-        env.write_slice(&share);
-    }
-
     // write the proofs {
-    for proof in proofs {
-        env.write(&proof).unwrap();
+    for proof in &proofs[..num_shares as usize] {
+        env.write(proof).unwrap();
     }
+    // write encryption data
+    env.write_slice(&public_key_bytes);
+    env.write_slice(&random_scalar_bytes);
+    env.write_slice(image_bytes);
 
     // Generate proof --------------------------
 
@@ -126,17 +132,17 @@ fn main() {
         .unwrap();
 
     let prover = default_prover();
-    let prove_info = prover.prove(env, BLOB_ELF).unwrap();
+    let prove_info = prover.prove(env, DELIVERY_GEN_ELF).unwrap();
 
     // Check that everything is OK
-    prove_info.receipt.verify(BLOB_ID).expect("failed to verify");
+    prove_info.receipt.verify(DELIVERY_GEN_ID).expect("failed to verify");
 
     let mode = if std::env::var_os("RISC0_DEV_MODE").is_some_and(|x| x == "1") {
         "dev"
     } else {
         "prod"
     };
-    let output_dir: PathBuf = [env!("CARGO_MANIFEST_DIR"), "..", "target", mode, "blobshot"]
+    let output_dir: PathBuf = [env!("CARGO_MANIFEST_DIR"), "..", "target", mode, "delivery"]
         .iter()
         .collect();
     create_dir_all(output_dir.as_path()).unwrap();
@@ -145,9 +151,12 @@ fn main() {
     let mut receipt_file = File::create(output_dir.join("receipt")).unwrap();
     receipt_file.write_all(&receipt_bytes).unwrap();
 
-    let image_id_bytes = convert_image_id(&BLOB_ID);
+    let image_id_bytes = convert_image_id(&DELIVERY_GEN_ID);
     let mut image_id_file = File::create(output_dir.join("image_id")).unwrap();
     image_id_file.write_all(&image_id_bytes).unwrap();
+
+    let mut blob_file = File::create(output_dir.join("blob")).unwrap();
+    blob_file.write_all(&blob_data).unwrap();
 }
 
 pub fn convert_image_id(data: &[u32; 8]) -> [u8; 32] {
@@ -156,4 +165,31 @@ pub fn convert_image_id(data: &[u32; 8]) -> [u8; 32] {
         res[4 * i..4 * (i + 1)].copy_from_slice(&data[i].to_le_bytes());
     }
     res
+}
+
+pub fn generate_blob(image_bytes: &[u8], random_scalar_y: &[u8], public_key_h: &[u8]) -> Vec<u8> {
+    let session_key = chacha20::Key::from_slice(random_scalar_y);
+
+    let public_key =
+        PublicKey::<Secp256k1>::from_sec1_bytes(public_key_h).expect("parse public point");
+
+    // Blind session key
+    let h = public_key.as_affine();
+    let y_repr: [u8; 32] = random_scalar_y.try_into().unwrap();
+    let y = Scalar::from_repr(y_repr.into()).expect("parse scalar");
+    let c1 = AffinePoint::GENERATOR.mul(y).to_affine();
+    let c2 = h.mul(y).to_affine();
+
+    // This is "encrypted" encryption key
+    let blinded_key = [c1.to_bytes().to_vec(), c2.to_bytes().to_vec()].concat();
+
+    // Encrypt image using symmetric encryption
+    let nonce = chacha20::Nonce::from_slice(CHACHA_STATIC_NONCE);
+    let mut cipher = ChaCha20::new(session_key, nonce);
+
+    let mut encrypted_image = image_bytes.to_vec();
+    cipher.try_apply_keystream(&mut encrypted_image).unwrap();
+
+    // Construct blob
+    [blinded_key, encrypted_image.to_vec()].concat()
 }

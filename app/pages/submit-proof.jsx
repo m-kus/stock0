@@ -110,7 +110,7 @@ export default function SubmitProof() {
 				/>
 				<textarea
 					className='mt-8 border rounded p-4 code'
-					placeholder='Publication data in JSON [provided by BlobstreamX client]'
+					placeholder='Attestation proof JSON [provided by BlobstreamX client]'
 					onChange={(e) =>
 						setFormInput((prev) => ({ ...prev, publicationData: e.target.value }))
 					}
