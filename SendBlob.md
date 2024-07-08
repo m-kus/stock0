@@ -2,7 +2,7 @@
 
 ---
 
-## Install Lught Node
+## Install Light Node
 
 Follow instructions and install all dependencies, celestia-node and start light node:
 
@@ -28,6 +28,7 @@ export CELESTIA_NODE_AUTH_TOKEN=$(celestia light auth admin --p2p.network arabic
 ```
 base64 file_with_blob > base64_blob
 export BLOB_BASE64=$(cat base64_blob)
+export NAMESPACE="AAAAAAAAAAAAAAAAAAAAAAAAAAECAwQFBgcICRA="
 // calculate $COMMITMENT
 
 curl -H "Content-Type: application/json" -H "Authorization: Bearer $CELESTIA_NODE_AUTH_TOKEN" -X POST --data '{"id": 1
@@ -36,7 +37,7 @@ curl -H "Content-Type: application/json" -H "Authorization: Bearer $CELESTIA_NOD
   "params": [
     [
       {
-        "namespace": "AAAAAAAAAAAAAAAAAAAAAAAAAAECAwQFBgcICRA=",
+        "namespace": $NAMESPACE,
         "data": $BLOB_BASE64,
         "share_version": 0,
         "commitment": $COMMITMENT
@@ -47,3 +48,25 @@ curl -H "Content-Type: application/json" -H "Authorization: Bearer $CELESTIA_NOD
 }' 127.0.0.1:26658
 
 ```
+
+Result:
+```
+
+```
+
+
+## Get Proof for Blob
+
+```
+{
+  "id": 1,
+  "jsonrpc": "2.0",
+  "method": "blob.GetProof",
+  "params": [
+    42,
+    $NAMESPACE,
+    $COMMITMENT
+  ]
+}
+```
+
