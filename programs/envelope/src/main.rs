@@ -12,9 +12,6 @@ use k256::{
 };
 use risc0_zkvm::{default_prover, ExecutorEnv};
 
-// const PUBLIC_KEY
-// const RANDOM_SCALAR
-
 fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::filter::EnvFilter::from_default_env())

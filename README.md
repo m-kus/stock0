@@ -159,11 +159,21 @@ If everything works fine, you will get the money!
 
 ### C2PA / self-signed external manifest
 
+Currently there's no tooling that would allow to verify external c2pa files, you can only check an image with embedded manifest/certificates. Hence for now we do not do that check on the client.
+
 ### Risc0 / proving time
+
+The goal was to be able to generate proof locally and to be able to stay wthin minutes (below 10-20M cycles on M3 machine) we can only operate with uncompressed formats (e.g. TIFF) and small pictures (less than 50KB).
 
 ### Aligned / proof facts and public outputs
 
+Aligned provides you all the data you need to do onchain verification, but it's complicated to check public output constraints because of how encoding is currently implemented. More specifically, verification data contains hash of Risc0 receipt which in its turn contains seal (large proof) and journal (public outputs). If you want to check that particular output equals to some value you would need to provide both the journal and the seal which is not feasible to do in Ethereum (seal is typically megabytes). 
+
 ### Blobstream / blob inclusion proof
+
+Currently the blobstream contract allows you to check attestation proofs (that a particular data root is part of the chain) and share proofs (that a particular range of shares are part of the tree which root is attested), but not blob inclusion proofs. The idea is that you do that in your own circuit and then just verify that data root and blob commitment match the public outputs.
+
+A potential problem with this approach is that you can only generate ZKP after you submit your blob to Celestia, because you have to know which block contains your blob and what is the position of your blob within that blob. That creates extra friction since it's quite different to collect all the necessary data to feed the circuit.
 
 ## Related work
 
