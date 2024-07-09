@@ -1,111 +1,85 @@
-# RISC Zero Rust Starter Template
+# Stock0 programs
 
-Welcome to the RISC Zero Rust Starter Template! This template is intended to
-give you a starting point for building a project using the RISC Zero zkVM.
-Throughout the template (including in this README), you'll find comments
-labelled `TODO` in places where you'll need to make changes. To better
-understand the concepts behind this template, check out the [zkVM
-Overview][zkvm-overview].
+This folder contains RISC0 programs that are part of the Stock0 protocol.  
 
-## Quick Start
-
-First, make sure [rustup] is installed. The
-[`rust-toolchain.toml`][rust-toolchain] file will be used by `cargo` to
-automatically install the correct version.
-
-To build all methods and execute the method within the zkVM, run the following
-command:
-
-```bash
-cargo run
+In order to build a particular program in developer mode (no proof) run:
+```
+make <program name>
 ```
 
-This is an empty template, and so there is no expected output (until you modify
-the code).
-
-### Executing the project locally in development mode
-
-During development, faster iteration upon code changes can be achieved by leveraging [dev-mode], we strongly suggest activating it during your early development phase. Furthermore, you might want to get insights into the execution statistics of your project, and this can be achieved by specifying the environment variable `RUST_LOG="[executor]=info"` before running your project.
-
-Put together, the command to run your project in development mode while getting execution statistics is:
-
-```bash
-RUST_LOG="[executor]=info" RISC0_DEV_MODE=1 cargo run
+For generating a proof (might take several minutes):
+```
+make <program name>-proof
 ```
 
-### Running proofs remotely on Bonsai
+The artifacts are available in the `./target/<dev / prod>/<program name>`:
+- Receipt: serialized Risc0 receipt (seal + journal), compatible with Aligned
+- Image ID: serialized program elf hash, comparible with Aligned
+- Private outputs
 
-_Note: The Bonsai proving service is still in early Alpha; an API key is
-required for access. [Click here to request access][bonsai access]._
+## Thumbnail
 
-If you have access to the URL and API key to Bonsai you can run your proofs
-remotely. To prove in Bonsai mode, invoke `cargo run` with two additional
-environment variables:
+This program takes an image in `TIFF` (uncompressed) format and generates a `PNG` thumbnail of size 75x75px.  
 
-```bash
-BONSAI_API_KEY="YOUR_API_KEY" BONSAI_API_URL="BONSAI_URL" cargo run
-```
+Inputs:
+- Image bytes (private)
 
-## How to create a project based on this template
+Outputs:
+- Image hash (public)
+- Thumbnail hash (public)
+- Thumbnail bytes (private)
 
-Search this template for the string `TODO`, and make the necessary changes to
-implement the required feature described by the `TODO` comment. Some of these
-changes will be complex, and so we have a number of instructional resources to
-assist you in learning how to write your own code for the RISC Zero zkVM:
+## Envelope
 
-- The [RISC Zero Developer Docs][dev-docs] is a great place to get started.
-- Example projects are available in the [examples folder][examples] of
-  [`risc0`][risc0-repo] repository.
-- Reference documentation is available at [https://docs.rs][docs.rs], including
-  [`risc0-zkvm`][risc0-zkvm], [`cargo-risczero`][cargo-risczero],
-  [`risc0-build`][risc0-build], and [others][crates].
+This program encrypts original image using envelope technique: the content is encrypted using symmetric cypher (in our case ChaCha) and the session key is encrypted with public key encryption (ElGamal). Lastly it creates a Celestia compatible blob and outputs its commitment.
 
-## Directory Structure
+Inputs:
+- Image bytes (private)
+- Session key (private)
+- Public key of the buyer (private)
 
-It is possible to organize the files for these components in various ways.
-However, in this starter template we use a standard directory structure for zkVM
-applications, which we think is a good starting point for your applications.
+Outputs:
+- Image hash (public)
+- Blob commitment (public)
+- Public key of the buyer (public)
 
-```text
-project_name
-├── Cargo.toml
-├── host
-│   ├── Cargo.toml
-│   └── src
-│       └── main.rs                    <-- [Host code goes here]
-└── methods
-    ├── Cargo.toml
-    ├── build.rs
-    ├── guest
-    │   ├── Cargo.toml
-    │   └── src
-    │       └── method_name.rs         <-- [Guest code goes here]
-    └── src
-        └── lib.rs
-```
+## Blobshot
 
-## Video Tutorial
+This program is a combination of https://github.com/S1nus/risc0-blob-inclusion and https://github.com/S1nus/sp1-blob-inclusion that allows to prove inclusion of a particular blob (currently with Celestia & BlobstreamX you can do block, transaction, and share range checks).
 
-For a walk-through of how to build with this template, check out this [excerpt
-from our workshop at ZK HACK III][zkhack-iii].
+Inputs:
+- Data root hash
+- Number of rows in the shares square related to our blob
+- Number of shares in our blob
+- Namespace
+- Range proof (for shares in the blob)
+- Row roots
+- Shares
+- Namespace proofs
 
-## Questions, Feedback, and Collaborations
+Outputs:
+- Proof validity (public)
 
-We'd love to hear from you on [Discord][discord] or [Twitter][twitter].
+It currently works only with sample data because it's pretty complicated to generate all the inputs for an arbitrary blob.
 
-[bonsai access]: https://bonsai.xyz/apply
-[cargo-risczero]: https://docs.rs/cargo-risczero
-[crates]: https://github.com/risc0/risc0/blob/main/README.md#rust-binaries
-[dev-docs]: https://dev.risczero.com
-[dev-mode]: https://dev.risczero.com/api/generating-proofs/dev-mode
-[discord]: https://discord.gg/risczero
-[docs.rs]: https://docs.rs/releases/search?query=risc0
-[examples]: https://github.com/risc0/risc0/tree/main/examples
-[risc0-build]: https://docs.rs/risc0-build
-[risc0-repo]: https://www.github.com/risc0/risc0
-[risc0-zkvm]: https://docs.rs/risc0-zkvm
-[rustup]: https://rustup.rs
-[rust-toolchain]: rust-toolchain.toml
-[twitter]: https://twitter.com/risczero
-[zkvm-overview]: https://dev.risczero.com/zkvm
-[zkhack-iii]: https://www.youtube.com/watch?v=Yg_BGqj_6lg&list=PLcPzhUaCxlCgig7ofeARMPwQ8vbuD6hC5&index=5
+## Delivery
+
+Finally, this program combines together envelope and blobshot in order to eliminate the commitment computation step from both programs.  
+So it encrypts the image AND proves that this blob belongs to a particular data root. With this proof it is enough to just have a verified Celestia header in Ethereum (can be retrieved from Blobstream contract).
+
+Inputs:
+- Data root hash
+- Number of shares in our blob
+- Range proof
+- Row roots
+- Namespace proofs
+- Public key of the buyer
+- Random session key
+- Image bytes
+
+Outputs:
+- Public key of the buyer
+- Data root
+- Image hash
+
+You might notice that we have a non-deterministic computation here, namely blob and header data have to be availailable prior to program execution. It means that you actually have to run the encryption twice, first time outside of the circuit and second time within the RISC0.  
