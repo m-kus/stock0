@@ -2,118 +2,94 @@
 
 Trust-minimized marketplace for content creators.
 
-## Settings things up
+This is a PoC developed during the [Lambda Hack '24](https://dorahacks.io/hackathon/lambdahackweek2).  
+It utilizes cryptographic techniques to remove trust from transactional relations between content creators and acquirers.
 
-### Risc0 toolchain
+### Fake content and C2PA standard
 
+Fake content is a huge problem which is already pretty severe but it's nothing compared to what expects us in the future. Luckily, there are initiatives like [Coalition for Content Provenance and Authenticity](https://c2pa.org/) (C2PA) that provide tooling to navigate through the AI-generated content, fakes, forgeries, and enforce integrity.
+
+In a nutshell, now every piece of media has a special manifest with a set of claims about that piece plus a chain of certificates attesting these claims. It can be something simple as data hash or more involved info like 3D depth or geo-location in the moment of taking the shot. Ultimately if you trust the root authority and the hardware/software that creates attestations you can be sure that the piece of media is untampered and possesses certain properties.
+
+### Proof of content transformation
+
+Signed content is great, but what if we want to make some modifications? Well C2PA standard allows to issue additional claims for every subsequent change (e.g. made by Adobe Photoshop) assuming that the licensed software would attest them. However, this is not really a reliable approach, and we can do better!
+
+Here ZKPs enter the game and offer provable content transformation, i.e. you can think of it as another type of claim where the attestation is not a certificate but a zero-knowledge proof. This is pretty powerful mechanism because not only it allows to preserve the chain of modifications, but it is not possible to hide certain intermediate states without losing the ability to prove claims about the original.
+
+### Proof of exclusive publication
+
+Unrelated but important technique that will be very handy for our purposes is a verifiable non-interactive way to deliver content to the buyer. It combines envelope encryption, ZKPs, and data availability solutions to make sure that pre-committed data made available for downloading without revealing it to the wide public.
+
+## Photo marketplace as a real use case
+
+To narrow down the scope and to demonstrate the possibilites of the tech we decided to take a real world scenario where all parties would benefit greatly from removing the need of trust.  
+
+Here is the case: fashion photographers do shootings and then sell them to magazines. It is pretty common case when magazines do not pay or abuse photographers in other way. Although there is a risk of fraud from both parties, overall the situation is quite assymetrical.  
+
+Let's outline the risks and how we can reduce them with the forementioned techniques:
+- The pictures are generated using AI or stolen: here is where C2PA comes handy
+- Let's say the certificates are fine, but the previews (watermarked) provided to the magazine do not match the original: provable transformation solves this
+- Finally, if magazine pays first there is a chance that photographer won't send the originals (similarly if the magazine pays afterwards it can choose not to pay at all): here we need a decentralized escrow (smart contract) + proof of exclusive publication to claim the funds
+
+## Implementation details
+
+![Flow chart](./assets/flow.png)
+
+### Create new item
+
+
+
+### Purchase item
+
+### Deliver item
+
+## Step-by-step guide
+
+### Installation
+
+Risc0 toolchain
 https://dev.risczero.com/api/zkvm/install 
 
-### C2PA utilities
-
+C2PA utilities
 https://github.com/contentauth/c2patool?tab=readme-ov-file#building-from-source
 
-### Aligned batcher CLI
-
+Aligned batcher CLI
 https://docs.alignedlayer.com/introduction/1_getting_started
 
-### Foundry
+### Usage
 
-https://book.getfoundry.sh/getting-started/installation
+#### Create external C2PA manifest
 
-# Materials
-## Market
+#### Generate thumbnail
 
-Create C2PA manifest with CLI
-https://github.com/contentauth/c2patool
+#### Submit proof to Aligned
 
-Verify content creds
-https://contentcredentials.org/verify?source=https%3A%2F%2Ffotoforensics.com%2Fanalysis.php%3Fid%3D25f9c5d79cf5716ac3aa9d609e9c04df7c87d78c.1893172%26fmt%3Dorig%26search%3DContentCredentials
+#### Create market item
 
-Rust SDK
-https://github.com/contentauth/c2pa-rs
+#### Deposit funds
 
-### Create image processing proof w/ RISC0
+#### Create encrypted blob
 
-It is likely that P256 curve is used for C2PA signing
-https://c2pa.org/specifications/specifications/1.4/specs/C2PA_Specification.html#_signature_algorithms
-https://github.com/nlok5923/attestation-rollup/blob/main/prover/methods/guest/src/bin/ecdsa_verify.rs
+#### Submit blob to Celestia
 
-Faster impl using bigint precompile
-https://github.com/automata-network/RustCrypto-elliptic-curves/pull/1
+#### Verify inclusion proof
 
-But actually we don't have to prove this, can be done on the client side? The important thing is that the claim is about the same hash that is used to derive a thumbnail.
+#### Submit proof to Aligned
 
-Claims are in the image file header (actual location depends on the file format)
-https://c2pa.org/specifications/specifications/1.4/specs/C2PA_Specification.html#_examples_of_claims
+#### Finalize the trade
 
-We need to downscale and add watermark
-https://github.com/nlok5923/attestation-rollup/blob/main/prover/methods/guest/src/bin/flip_image.rs
+## Limitations
 
-What is the optimal image size so that we can generate proof on M3 within minutes?
+### C2PA / self-signed external manifest
 
-### Submit proof to Aligned using rust SDK
+### Risc0 / proving time
 
-Guide
-https://docs.alignedlayer.com/guides/0_submitting_proofs
+### Aligned / proof facts and public outputs
 
-SDK method
-https://github.com/yetanotherco/aligned_layer/blob/f434d29454a9e8ef08b0c5c5ad18ef627b923a05/batcher/aligned-sdk/src/sdk.rs#L143
+### Blobstream / blob inclusion proof
 
-What is batcher address?
-What is the wallet? Is it in Ethereum testnet?
+## Related work
 
-Which fields need to be specified?
-https://github.com/yetanotherco/aligned_layer/blob/f434d29454a9e8ef08b0c5c5ad18ef627b923a05/batcher/aligned-batcher/src/zk_utils/mod.rs#L46
-
-Probably only proof and program
-https://github.com/yetanotherco/aligned_layer/blob/f434d29454a9e8ef08b0c5c5ad18ef627b923a05/batcher/aligned/send_infinite_sp1_tasks/send_infinite_sp1_tasks.sh#L23
-
-Oh actually proof is receipt (seal + public output)
-https://github.com/yetanotherco/aligned_layer/blob/3c63ddc09dff6f3006e279d3bc6dcdfe8e737b37/batcher/aligned-batcher/src/risc_zero/mod.rs#L4C49-L4C56
-
-### Consume proof verification fact onchain
-
-Contracts are in public testnet
-https://docs.alignedlayer.com/architecture/3_smart_contracts
-
-Looks like it
-https://github.com/yetanotherco/aligned_layer/blob/main/examples/zkquiz/contracts/src/VerifierContract.sol
-
-### Interact with blobstream onchain
-
-[Original code](https://github.com/succinctlabs/blobstreamx) deployed to https://holesky.etherscan.io/address/0x7D39B4a5Af8194b1aDA58d56Cc4aA5a05f949f3c#code
-
-[Fork with mocked verify function](https://github.com/dmirgaleev/blobstreamx) deployed to https://holesky.etherscan.io/address/0x8354693274eAe91Bc11B4b8981a8aB26d85F4A66
-
-(Original blobstreamX with fork of)[https://github.com/dmirgaleev/succinctx] deployed to https://holesky.etherscan.io/address/0x229970a338e983c48dd7b35bfdf444bb568851af
-
-```
-  CREATE2_SALT: 0x626c756500000000000000000000000000000000000000000000000000000000
-  GUARDIAN_17000: 0xefCf02A968C51DcD51f648579521ce9D0a879ACd
-  SUCCINCT_FEE_VAULT_17000: 0x3B8C02c90e3c0c796698f78BC71c697884c8f217
-  PROVER_17000: 0xefCf02A968C51DcD51f648579521ce9D0a879ACd
-  SUCCINCT_GATEWAY_17000=0xf937d2bc14cad82b661f00e12551a8d7bb5bc4d4
-```
-
-Example of verify attestation: https://github.com/dmirgaleev/blobstreamx-example
-
-### Submit blob to Celestia
-
-## C2PA
-
-Public samples
-https://c2pa.org/public-testfiles/image/
-
-https://opensource.contentauthenticity.org/docs/manifest/manifest-examples
-
-https://contentcredentials.org/trust/allowed.sha256.txt
-
-How to calculate a hash?
-https://github.com/contentauth/c2pa-rs/blob/main/sdk/src/assertions/data_hash.rs
-
-## Slides
-
-https://docs.google.com/presentation/d/1qq1QXSBcThOjaQ2OcEyS8cwNyAHs3SnC76YrBMAYENk/edit?usp=sharing
-
-
-
+* [Pixel Police](https://devfolio.co/projects/pixel-police-a4c5) - A protocol that enables organisations to verify that digital content(image or video) is not GenAI/ Deepfake 
+* [Veritas](https://eprint.iacr.org/2024/1066) - Verifying Image Transformations at Scale
