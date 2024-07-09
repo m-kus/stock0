@@ -13,21 +13,15 @@ async function main() {
 	// manually to make sure everything is compiled
 	// await hre.run('compile');
 
-	const Aligned = await hre.ethers.getContractFactory('AlignedManagerMock');
-	const aligned = await Aligned.deploy();
-	await aligned.deployed();
-
-	console.log('Aligned manager mock deployed to: ', aligned.address);
-
 	// We get the contract to deploy
 	const Market = await hre.ethers.getContractFactory('Market');
 	console.log("Market factory ", Market);
 
 	// TODO: thumbnail and envelope program (image) IDs
 	const market = await Market.deploy(
-		'0x2d66053b72f48e96685b2d3808fe091b1a994b7543a980d60affea2b5731e5af',
 		'0x0000000000000000000000000000000000000000000000000000000000000000',
-		aligned.address
+		'0x0000000000000000000000000000000000000000000000000000000000000000',
+		'0x58F280BeBE9B34c9939C3C39e0890C81f163B623'
 	);
 	await market.deployed();
 

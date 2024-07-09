@@ -15,13 +15,12 @@ contract Market is ReentrancyGuard {
 
     constructor(
         bytes32 thumbnailProgramId,
-        bytes32 envelopeProgramId 
-        //  , address alignedManagerContract
+        bytes32 envelopeProgramId,
+        address alignedManagerContract
     ) {
         _thumbnailProgramId = thumbnailProgramId;
         _envelopeProgramId = envelopeProgramId;
-        // _alignedManagerContract = alignedManagerContract;
-        _alignedManagerContract = 0x58F280BeBE9B34c9939C3C39e0890C81f163B623;
+        _alignedManagerContract = alignedManagerContract;
     }
 
     enum ItemStatus {
@@ -128,7 +127,7 @@ contract Market is ReentrancyGuard {
     ) public payable nonReentrant {
         require(price > 0, "Price must greater than 0");
 
-        // require(_thumbnailProgramId == provingSystemAuxDataCommitment, "Image ID does not match");
+        require(_thumbnailProgramId == provingSystemAuxDataCommitment, "Image ID does not match");
 
         require(
             checkProofVerification(
@@ -169,8 +168,8 @@ contract Market is ReentrancyGuard {
 
     function deliverMarketItem(
         uint256 itemId,
-        // bytes memory publicKey,
-        // verification data
+        bytes memory publicKey,
+        // verification data,
         bytes32 proofCommitment,
         bytes32 pubInputCommitment,
         bytes32 provingSystemAuxDataCommitment,
@@ -185,7 +184,7 @@ contract Market is ReentrancyGuard {
         // address addr = address(uint160(uint256(publicKeyHash)));
         // require(idToMarketItem[itemId].buyer == addr);
 
-        //require(_envelopeProgramId == provingSystemAuxDataCommitment, "Image ID does not match");
+        // require(_envelopeProgramId == provingSystemAuxDataCommitment, "Image ID does not match");
 
         require(
             checkProofVerification(

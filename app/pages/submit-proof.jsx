@@ -75,10 +75,10 @@ export default function SubmitProof() {
 		);
 		
 		const marketTransaction = await marketContract.deliverMarketItem(
-			item.itemId, 
+			item.itemId,
 			publicKey,
 			...decodeVerificationData(verificationData),
-			{ maxFeePerGas: 875000000 }
+			{ maxFeePerGas: 970000000 }
 		);
 		console.log("tx: ", marketTransaction);
 

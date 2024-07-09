@@ -32,6 +32,8 @@ Let's outline the risks and how we can reduce them with the forementioned techni
 - Let's say the certificates are fine, but the previews (watermarked) provided to the magazine do not match the original: provable transformation solves this
 - Finally, if magazine pays first there is a chance that photographer won't send the originals (similarly if the magazine pays afterwards it can choose not to pay at all): here we need a decentralized escrow (smart contract) + proof of exclusive publication to claim the funds
 
+Putting everything together we now have a solution that reduces the need of trust between transacting parties and the need of trusted arbitrage. The only assumption is PKI and hardware/software attestation security.
+
 ## Implementation details
 
 ![Flow chart](./assets/flow.png)

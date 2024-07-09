@@ -6,11 +6,20 @@ aligned-topup:
 		--keystore_path ~/.aligned_keystore/keystore0 \
 		--amount 0.02ether
 
-aligned-submit:
+aligned-submit-thumbnail:
 	RUST_LOG=trace aligned submit \
 		--proving_system Risc0 \
 		--proof ./programs/target/prod/thumbnail/receipt \
 		--vm_program ./programs/target/prod/thumbnail/image_id \
+		--aligned_verification_data_path ~/.aligned/aligned_verification_data \
+		--keystore_path ~/.aligned_keystore/keystore0 \
+		--conn wss://batcher.alignedlayer.com
+
+aligned-submit-envelope:
+	RUST_LOG=trace aligned submit \
+		--proving_system Risc0 \
+		--proof ./programs/target/prod/envelope/receipt \
+		--vm_program ./programs/target/prod/envelope/image_id \
 		--aligned_verification_data_path ~/.aligned/aligned_verification_data \
 		--keystore_path ~/.aligned_keystore/keystore0 \
 		--conn wss://batcher.alignedlayer.com
