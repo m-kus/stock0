@@ -78,8 +78,6 @@ The contract will check that the proof is correct and that public output contain
 
 ## Step-by-step guide
 
-
-
 ### Installation
 
 Risc0 toolchain
@@ -91,32 +89,71 @@ https://github.com/contentauth/c2patool?tab=readme-ov-file#building-from-source
 Aligned batcher CLI
 https://docs.alignedlayer.com/introduction/1_getting_started
 
+Celestia light node
+https://docs.celestia.org/developers/node-tutorial
+
 Instructions for [RISC0 programs](./programs)  
 Instructions for [Marketplace app](./app)
 
 ### Usage
 
-
+The usage flow includes interacting with multiple systems and it is mostly manual work :)  
+Nevertheless, individual parts work, though the integration might be broken if misconfigured.
 
 #### Create external C2PA manifest
 
+For testing purposes we need to [create self-signed certificates](./c2pa/README.md) for the original images.
+
 #### Generate thumbnail
 
+Go to programs and run:
+`make thumbnail-proof`
+
 #### Submit proof to Aligned
+
+Go to programs and run:
+`make aligned-submit-thumbnail`
+
+The verification data should be available at `~/.aligned/aligned_verification_data/<file.json>`.  
+We will need it at later stages.
 
 #### Create market item
 
+Go to the browser and open the item creation form.  
+Fill the fields with the data generated on the previos steps:
+- C2PA manifest
+- Verification data
+- Thumbnail (produced by the RISC0 program)
+
 #### Deposit funds
+
+Now play the buyer role and press purchase on the listed item. 
 
 #### Create encrypted blob
 
-#### Submit blob to Celestia
+Run the envelope program (in dev mode) to produce the blob.
+
+#### Submit blob to Celestia and get range proof
+
+Follow the [instructions](./submit-blob/README.md) to submit the blob to Celestia testnet and generate proof.  
+Note that you might be required to do some extra configuration.
 
 #### Verify inclusion proof
 
+Run delivery program to produce the blob inclusion proof.
+
 #### Submit proof to Aligned
 
+Go to programs and run:
+`make aligned-submit-delivery`
+
+The verification data should be available at `~/.aligned/aligned_verification_data/<file.json>`.  
+We will need it in the next step.
+
 #### Finalize the trade
+
+Go to the browser and fill the "submit proof" form with the data obtained in the previous steps.  
+If everything works fine, you will get the money!
 
 ## Limitations
 

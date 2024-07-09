@@ -17,6 +17,11 @@ The artifacts are available in the `./target/<dev / prod>/<program name>`:
 - Image ID: serialized program elf hash, comparible with Aligned
 - Private outputs
 
+In order to submit proofs to Aligned:
+1. [Make sure](https://docs.alignedlayer.com/guides/0_submitting_proofs) you have sufficient balance `make aligned-balance`
+2. If not then it's time to top up (you would need some test coins in Holesky) `make aligned-topup`
+3. Submit proof and wait until verification data is stored locally `make aligned-submit-<program name>`
+
 ## Thumbnail
 
 This program takes an image in `TIFF` (uncompressed) format and generates a `PNG` thumbnail of size 75x75px.  
