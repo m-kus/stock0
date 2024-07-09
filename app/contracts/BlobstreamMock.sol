@@ -1,5 +1,5 @@
 /* // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.19;
 
 struct BinaryMerkleProof {
     // List of side nodes to verify and calculate tree.
@@ -8,6 +8,15 @@ struct BinaryMerkleProof {
     uint256 key;
     // The number of leaves in the tree
     uint256 numLeaves;
+}
+
+struct DataRootTuple {
+    // Celestia block height the data root was included in.
+    // Genesis block is height = 0.
+    // First queryable block is height = 1.
+    uint256 height;
+    // Data root.
+    bytes32 dataRoot;
 }
 
 struct AttestationProof {
