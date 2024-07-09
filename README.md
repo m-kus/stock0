@@ -40,13 +40,45 @@ Putting everything together we now have a solution that reduces the need of trus
 
 ### Create new item
 
+First step is listing a new item for sale, in order to do that the content creator has to do some preliminary work:
+0. Obtain C2PA manifest for their content
+1. Create a thumbnail and a proof that it was actually derived from the original
+2. Submit the proof to Aligned and wait till the verification
 
+After that it's possible to create a new item by interacting with the marketplace contract. Creator has to provide:
+- Sell price
+- C2PA manifest
+- Verification data (from Aligned)
+- Thumbnail image
+
+The contract will check that the proof is correct and that public output contains the same thumbnail image hash. Thumbnail is uploaded to IPFS so the app uses thumbnail hash for content resolving actually.
+
+The manifest is verified on the client side: it is not absolutely necessary to generate a ZKP for that.
 
 ### Purchase item
 
+The item is displayed in the listing and anyone can purchase it: money will be locked on the contract and it will await proofs of delivery, i.e. that the original content can be downloaded by the buyer.
+
 ### Deliver item
 
+Once the money are deposited, the seller again has to do several preliminary actions:
+1. Encrypt the original image using public key of the buyer and random session key
+2. Submit blob to Celestia and store the header of the block containing the blob
+3. Produce range proof for shares the blob consists of
+4. Run RISC0 program (or multiple programs) that does the encryption and inclusion proof verification
+5. Submit the proof(s) to Aligned and wait till the verification
+6. Obtain Blobstream attestation proof for the block that contains the blob
+
+After it's done, seller can redeem the payment. It has to invoke the marketplace contract with the following data:
+- Public key that was used for encryption
+- Verification data (from Aligned)
+- Attestation proof
+
+The contract will check that the proof is correct and that public output contains the same image hash, public key, also that public key actually matches the buyer's account address. If everything is ok, the payment is unlocked, deal is settled.
+
 ## Step-by-step guide
+
+
 
 ### Installation
 
@@ -59,7 +91,12 @@ https://github.com/contentauth/c2patool?tab=readme-ov-file#building-from-source
 Aligned batcher CLI
 https://docs.alignedlayer.com/introduction/1_getting_started
 
+Instructions for [RISC0 programs](./programs)  
+Instructions for [Marketplace app](./app)
+
 ### Usage
+
+
 
 #### Create external C2PA manifest
 
