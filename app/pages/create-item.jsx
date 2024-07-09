@@ -45,9 +45,9 @@ export default function CreateItem() {
 	};
 
 	const createItem = async () => {
-		const { price } = formInput;
-		console.log("New item: ", price, manifestFile, file);
-		if (!price || !manifestFile || !file) return;
+		const { price, verificationData } = formInput;
+		console.log("New item: ", price, verificationData, manifestFile, file);
+		if (!price || !manifestFile || !file || !verificationData) return;
 
 		try {
 			const manifestHashBytes = CID.parse(manifestFile).bytes;
@@ -104,9 +104,6 @@ export default function CreateItem() {
 					className='mt-8 border rounded p-4'
 					placeholder='Price in ETH'
 					onChange={(e) =>
-						setFormInput((prev) => ({ ...prev, price: e.target.value }))
-					}
-					onChangeManifest={(e) =>
 						setFormInput((prev) => ({ ...prev, price: e.target.value }))
 					}
 				/>

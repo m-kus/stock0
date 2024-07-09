@@ -13,10 +13,15 @@ contract Market is ReentrancyGuard {
     bytes32 private _envelopeProgramId;
     address private _alignedManagerContract;
 
-    constructor(bytes32 thumbnailProgramId, bytes32 envelopeProgramId, address alignedManagerContract) {
+    constructor(
+        bytes32 thumbnailProgramId,
+        bytes32 envelopeProgramId 
+        //  , address alignedManagerContract
+    ) {
         _thumbnailProgramId = thumbnailProgramId;
         _envelopeProgramId = envelopeProgramId;
-        _alignedManagerContract = alignedManagerContract;
+        // _alignedManagerContract = alignedManagerContract;
+        _alignedManagerContract = 0x58F280BeBE9B34c9939C3C39e0890C81f163B623;
     }
 
     enum ItemStatus {
@@ -57,18 +62,21 @@ contract Market is ReentrancyGuard {
         bytes memory merkleProof,
         uint256 verificationDataBatchIndex
     ) public view returns (bool) {
-        (bool callWasSuccessfull, bytes memory proofIsIncluded) = _alignedManagerContract.staticcall(
-            abi.encodeWithSignature(
-                "verifyBatchInclusion(bytes32,bytes32,bytes32,bytes20,bytes32,bytes,uint256)",
-                proofCommitment,
-                pubInputCommitment,
-                provingSystemAuxDataCommitment,
-                proofGeneratorAddr,
-                batchMerkleRoot,
-                merkleProof,
-                verificationDataBatchIndex
-            )
-        );
+        (
+            bool callWasSuccessfull,
+            bytes memory proofIsIncluded
+        ) = _alignedManagerContract.staticcall(
+                abi.encodeWithSignature(
+                    "verifyBatchInclusion(bytes32,bytes32,bytes32,bytes20,bytes32,bytes,uint256)",
+                    proofCommitment,
+                    pubInputCommitment,
+                    provingSystemAuxDataCommitment,
+                    proofGeneratorAddr,
+                    batchMerkleRoot,
+                    merkleProof,
+                    verificationDataBatchIndex
+                )
+            );
         require(callWasSuccessfull, "alignedManager static call failed");
 
         return abi.decode(proofIsIncluded, (bool));
@@ -122,15 +130,18 @@ contract Market is ReentrancyGuard {
 
         // require(_thumbnailProgramId == provingSystemAuxDataCommitment, "Image ID does not match");
 
-        require(checkProofVerification(
-            proofCommitment,
-            pubInputCommitment,
-            provingSystemAuxDataCommitment,
-            proofGeneratorAddr,
-            batchMerkleRoot,
-            merkleProof,
-            verificationDataBatchIndex
-        ), "alignedManager says proof is not included");
+        require(
+            checkProofVerification(
+                proofCommitment,
+                pubInputCommitment,
+                provingSystemAuxDataCommitment,
+                proofGeneratorAddr,
+                batchMerkleRoot,
+                merkleProof,
+                verificationDataBatchIndex
+            ),
+            "alignedManager says proof is not included"
+        );
 
         // NOTE
         //
@@ -158,7 +169,7 @@ contract Market is ReentrancyGuard {
 
     function deliverMarketItem(
         uint256 itemId,
-        bytes memory publicKey,
+        // bytes memory publicKey,
         // verification data
         bytes32 proofCommitment,
         bytes32 pubInputCommitment,
@@ -167,7 +178,7 @@ contract Market is ReentrancyGuard {
         bytes32 batchMerkleRoot,
         bytes memory merkleProof,
         uint256 verificationDataBatchIndex
-    ) public nonReentrant() {
+    ) public nonReentrant {
         require(idToMarketItem[itemId].status == ItemStatus.InEscrow);
 
         // bytes32 publicKeyHash = keccak256(publicKey);
@@ -176,15 +187,18 @@ contract Market is ReentrancyGuard {
 
         //require(_envelopeProgramId == provingSystemAuxDataCommitment, "Image ID does not match");
 
-        require(checkProofVerification(
-            proofCommitment,
-            pubInputCommitment,
-            provingSystemAuxDataCommitment,
-            proofGeneratorAddr,
-            batchMerkleRoot,
-            merkleProof,
-            verificationDataBatchIndex
-        ), "alignedManager says proof is not included");
+        require(
+            checkProofVerification(
+                proofCommitment,
+                pubInputCommitment,
+                provingSystemAuxDataCommitment,
+                proofGeneratorAddr,
+                batchMerkleRoot,
+                merkleProof,
+                verificationDataBatchIndex
+            ),
+            "alignedManager says proof is not included"
+        );
 
         // NOTE
         //
@@ -196,7 +210,7 @@ contract Market is ReentrancyGuard {
         // is very large.
 
         // TODO: verify that blob was included in Celestia block
-        
+
         idToMarketItem[itemId].seller.transfer(idToMarketItem[itemId].price);
         idToMarketItem[itemId].status = ItemStatus.Sold;
     }
@@ -207,7 +221,8 @@ contract Market is ReentrancyGuard {
         uint256 itemIdx = 0;
 
         for (uint256 i = 0; i < totalItemCount; i++) {
-            if (ItemStatus.Available == idToMarketItem[i + 1].status) itemCount += 1;
+            if (ItemStatus.Available == idToMarketItem[i + 1].status)
+                itemCount += 1;
         }
 
         MarketItem[] memory items = new MarketItem[](itemCount);
@@ -234,13 +249,19 @@ contract Market is ReentrancyGuard {
         uint256 itemIdx = 0;
 
         for (uint256 i; i < totalItemCount; i++) {
-            if (msg.sender == idToMarketItem[i + 1].seller || msg.sender == idToMarketItem[i + 1].buyer) itemCount += 1;
+            if (
+                msg.sender == idToMarketItem[i + 1].seller ||
+                msg.sender == idToMarketItem[i + 1].buyer
+            ) itemCount += 1;
         }
 
         MarketItem[] memory items = new MarketItem[](itemCount);
 
         for (uint256 i = 0; i < itemCount; i++) {
-            if (msg.sender == idToMarketItem[i + 1].seller || msg.sender == idToMarketItem[i + 1].buyer) {
+            if (
+                msg.sender == idToMarketItem[i + 1].seller ||
+                msg.sender == idToMarketItem[i + 1].buyer
+            ) {
                 uint itemId = idToMarketItem[i + 1].itemId;
                 MarketItem memory item = idToMarketItem[itemId];
                 items[itemIdx] = item;
