@@ -1,0 +1,9 @@
+[package]
+name = "thumb"
+version = "0.1.0"
+
+[cairo]
+enable-gas = false
+
+[dependencies]
+cairo_run = ">=2.7.0"
